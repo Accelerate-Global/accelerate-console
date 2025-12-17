@@ -16,7 +16,9 @@ export function AppLayout({ children, onLogoClick, showFooter = true }: AppLayou
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader onLogoClick={onLogoClick} />
 
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <main id="main-content" className="flex-1 pb-20 md:pb-0">
+        {children}
+      </main>
 
       {/* Footer - hidden on mobile due to bottom tab bar */}
       {showFooter && (

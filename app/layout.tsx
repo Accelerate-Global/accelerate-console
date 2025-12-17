@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ThemeProvider } from "@/components/theme-provider"
+import { SkipLink } from "@/components/skip-link"
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants"
 import "./globals.css"
 
@@ -58,6 +59,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <TooltipProvider delayDuration={400} skipDelayDuration={100}>
+            <SkipLink />
             {children}
           </TooltipProvider>
         </ThemeProvider>

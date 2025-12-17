@@ -1,28 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import {
   Search,
-  Sparkles,
   Plus,
-  FolderHeart,
+  Filter,
   MoreHorizontal,
-  Eye,
-  Trash2,
   Pencil,
+  Trash2,
+  X,
+  Users,
+  Clock,
+  GitCompare,
+  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
-  TrendingUp,
-  Users,
-  GitCompare,
-  X,
-  Clock,
-  Filter,
-  ChevronDown,
-  ChevronRight,
   AlertCircle,
+  ChevronRight,
+  Info,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -46,165 +43,106 @@ import {
 } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { useToast } from "@/hooks/use-toast"
+import { AppLayout } from "@/components/app-layout"
 import { getEngagementColor } from "@/lib/status-colors"
+import { normalizeEngagementStatus } from "@/lib/terminology"
 
-const collections = [
-  { id: "all", name: "All Watched", count: 24, icon: Eye, color: "text-muted-foreground" },
-  { id: "priority", name: "Priority Focus", count: 8, icon: FolderHeart, color: "text-red-500" },
-  { id: "south-asia", name: "South Asia Research", count: 6, icon: FolderHeart, color: "text-blue-500" },
-  { id: "unreached", name: "Unreached Tracking", count: 5, icon: FolderHeart, color: "text-amber-500" },
-  { id: "language", name: "Language Cluster Study", count: 3, icon: FolderHeart, color: "text-emerald-500" },
-  { id: "partner", name: "Partner Interest", count: 2, icon: FolderHeart, color: "text-purple-500" },
+// Mock data
+const mockCollections = [
+  { id: "all", name: "All Watched", count: 24, color: "bg-primary" },
+  { id: "priority", name: "Priority Focus", count: 8, color: "bg-amber-500" },
+  { id: "south-asia", name: "South Asia", count: 12, color: "bg-emerald-500" },
+  { id: "unreached", name: "Unreached UPGs", count: 15, color: "bg-red-500" },
 ]
 
-type ChangeType = "engagement" | "population" | "updated" | "none"
-
-interface PeopleGroup {
-  id: string
-  name: string
-  axId: string
-  countries: string[]
-  population: number
-  populationChange: number | null
-  engagementStatus: string
-  engagementPrevious: string | null
-  lastUpdated: string
-  lastViewed: string
-  sources: string[]
-  changes: ChangeType[]
-  collection: string
-}
-
-const watchedGroups: PeopleGroup[] = [
+const mockWatchedGroups = [
   {
     id: "1",
-    name: "Shaikh",
-    axId: "AX-103847",
-    countries: ["India", "Bangladesh", "Pakistan"],
-    population: 214500000,
-    populationChange: 2300000,
-    engagementStatus: "Minimally Engaged",
-    engagementPrevious: "Unreached",
+    name: "Shaikh (Muslim traditions)",
+    axId: "AX-10234",
+    countries: ["Bangladesh", "India"],
+    engagementStatus: "Unreached",
+    engagementPrevious: null,
+    population: 180500000,
+    populationChange: 2500000,
     lastUpdated: "2 days ago",
     lastViewed: "1 week ago",
-    sources: ["IMB", "Joshua Project"],
-    changes: ["engagement", "population", "updated"],
+    sources: ["Joshua Project", "IMB"],
     collection: "priority",
+    changes: ["population", "updated"],
   },
   {
     id: "2",
-    name: "Yadav",
-    axId: "AX-103921",
+    name: "Yadav (Hindu traditions)",
+    axId: "AX-10892",
     countries: ["India", "Nepal"],
-    population: 58200000,
-    populationChange: -150000,
-    engagementStatus: "Unreached",
-    engagementPrevious: null,
-    lastUpdated: "1 week ago",
-    lastViewed: "3 days ago",
+    engagementStatus: "Minimally Reached",
+    engagementPrevious: "Unreached",
+    population: 62800000,
+    populationChange: null,
+    lastUpdated: "5 days ago",
+    lastViewed: "2 weeks ago",
     sources: ["Joshua Project"],
-    changes: ["population"],
     collection: "south-asia",
+    changes: ["engagement"],
   },
   {
     id: "3",
     name: "Turk",
-    axId: "AX-104102",
+    axId: "AX-15678",
     countries: ["Turkey", "Germany", "Netherlands"],
-    population: 67800000,
-    populationChange: null,
-    engagementStatus: "Superficially Engaged",
-    engagementPrevious: "Minimally Engaged",
-    lastUpdated: "3 days ago",
-    lastViewed: "2 weeks ago",
-    sources: ["IMB", "Operation World"],
-    changes: ["engagement", "updated"],
-    collection: "priority",
+    engagementStatus: "Partially Reached",
+    engagementPrevious: null,
+    population: 58200000,
+    populationChange: -150000,
+    lastUpdated: "1 week ago",
+    lastViewed: "3 days ago",
+    sources: ["Joshua Project", "Operation World"],
+    collection: "all",
+    changes: [],
   },
   {
     id: "4",
-    name: "Pashtun",
-    axId: "AX-102847",
-    countries: ["Afghanistan", "Pakistan"],
-    population: 49200000,
-    populationChange: 800000,
+    name: "Bengali (Muslim traditions)",
+    axId: "AX-10156",
+    countries: ["Bangladesh", "India"],
     engagementStatus: "Unreached",
     engagementPrevious: null,
-    lastUpdated: "Yesterday",
+    population: 145700000,
+    populationChange: 1200000,
+    lastUpdated: "3 days ago",
     lastViewed: "1 month ago",
-    sources: ["Joshua Project", "Ethnologue"],
+    sources: ["IMB", "Joshua Project"],
+    collection: "priority",
     changes: ["population", "updated"],
-    collection: "unreached",
   },
   {
     id: "5",
-    name: "Bengali Muslim",
-    axId: "AX-103102",
-    countries: ["Bangladesh", "India"],
-    population: 168500000,
-    populationChange: null,
-    engagementStatus: "Minimally Engaged",
-    engagementPrevious: null,
-    lastUpdated: "2 weeks ago",
-    lastViewed: "5 days ago",
-    sources: ["IMB"],
-    changes: [],
-    collection: "south-asia",
-  },
-  {
-    id: "6",
-    name: "Persian",
-    axId: "AX-104521",
-    countries: ["Iran", "Afghanistan", "Tajikistan"],
-    population: 56700000,
-    populationChange: 1200000,
-    engagementStatus: "Significantly Engaged",
-    engagementPrevious: "Superficially Engaged",
-    lastUpdated: "4 days ago",
-    lastViewed: "2 weeks ago",
-    sources: ["Joshua Project", "Operation World"],
-    changes: ["engagement", "population", "updated"],
-    collection: "language",
-  },
-  {
-    id: "7",
-    name: "Rajput",
-    axId: "AX-103456",
-    countries: ["India", "Pakistan", "Nepal"],
-    population: 43100000,
-    populationChange: null,
+    name: "Pashtun (Pathan)",
+    axId: "AX-12456",
+    countries: ["Afghanistan", "Pakistan"],
     engagementStatus: "Unreached",
     engagementPrevious: null,
-    lastUpdated: "1 month ago",
-    lastViewed: "3 weeks ago",
+    population: 49500000,
+    populationChange: null,
+    lastUpdated: "2 weeks ago",
+    lastViewed: "2 weeks ago",
     sources: ["Joshua Project"],
+    collection: "unreached",
     changes: [],
-    collection: "south-asia",
-  },
-  {
-    id: "8",
-    name: "Arab, Iraqi",
-    axId: "AX-104892",
-    countries: ["Iraq", "Syria", "Jordan"],
-    population: 28400000,
-    populationChange: -500000,
-    engagementStatus: "Minimally Engaged",
-    engagementPrevious: null,
-    lastUpdated: "5 days ago",
-    lastViewed: "1 week ago",
-    sources: ["IMB", "Joshua Project"],
-    changes: ["population", "updated"],
-    collection: "priority",
   },
 ]
 
 export function WatchlistPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const { toast } = useToast()
+  const [collections, setCollections] = useState(mockCollections)
   const [selectedCollection, setSelectedCollection] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState("changes")
+
+  // Dialogs
   const [createCollectionDialog, setCreateCollectionDialog] = useState(false)
   const [renameCollectionDialog, setRenameCollectionDialog] = useState<{
     open: boolean
@@ -214,88 +152,91 @@ export function WatchlistPage() {
     open: boolean
     collection: (typeof collections)[0] | null
   }>({ open: false, collection: null })
-  const [removeFromWatchlistDialog, setRemoveFromWatchlistDialog] = useState<{
+  const [removeGroupDialog, setRemoveGroupDialog] = useState<{
     open: boolean
-    group: PeopleGroup | null
+    group: (typeof mockWatchedGroups)[0] | null
   }>({ open: false, group: null })
 
-  const filteredGroups = watchedGroups
-    .filter((group) => {
-      const matchesSearch =
-        group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        group.axId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        group.countries.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchesCollection = selectedCollection === "all" || group.collection === selectedCollection
-      return matchesSearch && matchesCollection
-    })
-    .sort((a, b) => {
-      if (sortBy === "changes") {
-        return b.changes.length - a.changes.length
-      } else if (sortBy === "name") {
-        return a.name.localeCompare(b.name)
-      } else if (sortBy === "population") {
-        return b.population - a.population
-      } else if (sortBy === "updated") {
-        return 0 // Would need proper date comparison
-      }
-      return 0
-    })
+  const [newCollectionName, setNewCollectionName] = useState("")
 
-  const toggleGroupSelection = (groupId: string) => {
+  const filteredGroups = mockWatchedGroups.filter((group) => {
+    const matchesCollection = selectedCollection === "all" || group.collection === selectedCollection
+    const matchesSearch =
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.axId.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCollection && matchesSearch
+  })
+
+  const groupsWithChanges = filteredGroups.filter((g) => g.changes.length > 0).length
+
+  const toggleGroupSelection = useCallback((groupId: string) => {
     setSelectedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
-  }
+  }, [])
 
-  const toggleAllSelection = () => {
+  const toggleAllSelection = useCallback(() => {
     if (selectedGroups.length === filteredGroups.length) {
       setSelectedGroups([])
     } else {
       setSelectedGroups(filteredGroups.map((g) => g.id))
     }
+  }, [selectedGroups.length, filteredGroups])
+
+  const handleCreateCollection = () => {
+    if (!newCollectionName.trim()) return
+    const newCollection = {
+      id: `collection-${Date.now()}`,
+      name: newCollectionName,
+      count: 0,
+      color: "bg-blue-500",
+    }
+    setCollections([...collections, newCollection])
+    setNewCollectionName("")
+    setCreateCollectionDialog(false)
+    toast({
+      title: "Collection created",
+      description: `"${newCollectionName}" has been created.`,
+    })
   }
 
-  const groupsWithChanges = filteredGroups.filter((g) => g.changes.length > 0).length
+  const handleRenameCollection = () => {
+    if (!renameCollectionDialog.collection || !newCollectionName.trim()) return
+    setCollections(
+      collections.map((c) => (c.id === renameCollectionDialog.collection!.id ? { ...c, name: newCollectionName } : c)),
+    )
+    setNewCollectionName("")
+    setRenameCollectionDialog({ open: false, collection: null })
+    toast({
+      title: "Collection renamed",
+      description: `Collection has been renamed to "${newCollectionName}".`,
+    })
+  }
+
+  const handleDeleteCollection = () => {
+    if (!deleteCollectionDialog.collection) return
+    setCollections(collections.filter((c) => c.id !== deleteCollectionDialog.collection!.id))
+    if (selectedCollection === deleteCollectionDialog.collection.id) {
+      setSelectedCollection("all")
+    }
+    setDeleteCollectionDialog({ open: false, collection: null })
+    toast({
+      title: "Collection deleted",
+      description: "The collection has been removed.",
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-semibold text-foreground">Accelerate Global</span>
-            </Link>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Explore
-            </Link>
-            <Link href="/search" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Search
-            </Link>
-            <Link href="/saved-views" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Saved Views
-            </Link>
-            <Link href="/watchlist" className="text-sm font-medium text-foreground">
-              Watchlist
-            </Link>
-          </nav>
-        </div>
-      </header>
-
+    <AppLayout>
       <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Mobile Sidebar Trigger */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="lg:hidden flex items-center gap-2 mb-4 bg-transparent">
-                <Filter className="h-4 w-4" />
+                <Filter className="h-4 w-4" aria-hidden="true" />
                 Collections
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80">
+            <SheetContent side="left" className="w-80" hideCloseButton>
               <SheetHeader>
                 <SheetTitle>Collections</SheetTitle>
               </SheetHeader>
@@ -338,7 +279,7 @@ export function WatchlistPage() {
                 </p>
               </div>
               <Button className="gap-2 min-h-[44px]" onClick={() => setCreateCollectionDialog(true)}>
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" aria-hidden="true" />
                 New Collection
               </Button>
             </div>
@@ -346,211 +287,293 @@ export function WatchlistPage() {
             {/* Search and Controls */}
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <Input
                   type="text"
                   placeholder="Search watched groups..."
                   className="pl-10 h-11"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search watched groups"
                 />
                 {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-secondary flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <X className="h-3 w-3 text-muted-foreground" />
-                  </button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-secondary flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label="Clear search"
+                        >
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Clear search</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-44 h-11 bg-transparent">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="changes">Most Changes</SelectItem>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                  <SelectItem value="population">Population</SelectItem>
-                  <SelectItem value="updated">Recently Updated</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
-            {/* Selection Bar */}
+            {/* Selection Bar - Disabled until >=2 selected, aria-live for count */}
             {selectedGroups.length > 0 && (
-              <div className="flex items-center justify-between bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 mb-4">
+              <div
+                className="flex items-center justify-between bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 mb-4"
+                role="status"
+                aria-live="polite"
+              >
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSelectedGroups([])}
-                    className="h-8 w-8 rounded-md bg-background flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setSelectedGroups([])}
+                          className="h-8 w-8 rounded-md bg-background flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label="Clear selection"
+                        >
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Clear selection</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <span className="text-sm font-medium text-foreground">{selectedGroups.length} selected</span>
                 </div>
-                <Button className="gap-2 min-h-[40px]">
-                  <GitCompare className="h-4 w-4" />
-                  Compare Selected
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="gap-2 min-h-[40px]"
+                        disabled={selectedGroups.length < 2}
+                        aria-describedby={selectedGroups.length < 2 ? "compare-hint" : undefined}
+                      >
+                        <GitCompare className="h-4 w-4" aria-hidden="true" />
+                        Compare Selected
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {selectedGroups.length < 2
+                        ? "Select at least 2 groups to compare"
+                        : `Compare ${selectedGroups.length} selected groups`}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {selectedGroups.length < 2 && (
+                  <span id="compare-hint" className="sr-only">
+                    Select at least 2 groups to enable comparison
+                  </span>
+                )}
               </div>
             )}
 
             {/* Select All Row */}
             <div className="flex items-center gap-3 px-4 py-2 mb-2">
               <Checkbox
+                id="select-all"
                 checked={selectedGroups.length === filteredGroups.length && filteredGroups.length > 0}
                 onCheckedChange={toggleAllSelection}
                 className="h-5 w-5"
+                aria-label={
+                  selectedGroups.length === filteredGroups.length ? "Deselect all groups" : "Select all groups"
+                }
               />
-              <span className="text-sm text-muted-foreground">Select all</span>
+              <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
+                Select all
+              </label>
             </div>
 
             {/* Groups List */}
-            <div className="space-y-3">
+            <div className="space-y-3" role="list" aria-label="Watched people groups">
               {filteredGroups.map((group) => (
                 <Card
                   key={group.id}
-                  className={`p-4 md:p-5 hover:shadow-md transition-all border-border/50 group ${
-                    selectedGroups.includes(group.id) ? "ring-2 ring-accent bg-accent/5" : ""
-                  } ${group.changes.length > 0 ? "border-l-4 border-l-accent" : ""}`}
+                  role="listitem"
+                  className={`p-4 md:p-5 transition-all hover:shadow-md ${
+                    group.changes.length > 0 ? "border-l-4 border-l-accent" : ""
+                  } ${selectedGroups.includes(group.id) ? "ring-2 ring-accent/50 bg-accent/5" : ""}`}
                 >
                   <div className="flex items-start gap-4">
                     {/* Checkbox */}
-                    <div className="pt-1">
-                      <Checkbox
-                        checked={selectedGroups.includes(group.id)}
-                        onCheckedChange={() => toggleGroupSelection(group.id)}
-                        className="h-5 w-5"
-                      />
-                    </div>
+                    <Checkbox
+                      checked={selectedGroups.includes(group.id)}
+                      onCheckedChange={() => toggleGroupSelection(group.id)}
+                      className="mt-1 h-5 w-5"
+                      aria-label={`Select ${group.name}`}
+                    />
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Header Row */}
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Link
-                              href={`/profile/${group.id}`}
-                              className="text-lg font-semibold text-foreground hover:text-accent transition-colors"
-                            >
-                              {group.name}
-                            </Link>
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                          <Link
+                            href={`/profile/${group.id}`}
+                            className="text-lg font-semibold text-foreground hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                          >
+                            {group.name}
+                          </Link>
+                          <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground font-mono">{group.axId}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {group.countries.slice(0, 3).map((country) => (
-                              <Badge key={country} variant="secondary" className="text-xs font-normal">
-                                {country}
-                              </Badge>
-                            ))}
-                            {group.countries.length > 3 && (
-                              <Badge variant="secondary" className="text-xs font-normal">
-                                +{group.countries.length - 3}
-                              </Badge>
-                            )}
+                            <span className="text-muted-foreground/50">·</span>
+                            <div className="flex flex-wrap gap-1">
+                              {group.countries.map((country) => (
+                                <Badge key={country} variant="secondary" className="text-xs px-1.5 py-0">
+                                  {country}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button variant="outline" size="sm" className="gap-1.5 min-h-[36px] bg-transparent" asChild>
-                            <Link href={`/profile/${group.id}`}>
-                              <Eye className="h-3.5 w-3.5" />
-                              View
-                            </Link>
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-9 w-9">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem className="gap-2">
-                                <ArrowUpRight className="h-4 w-4" />
-                                Open Profile
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2">
-                                <GitCompare className="h-4 w-4" />
-                                Add to Compare
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => setRemoveFromWatchlistDialog({ open: true, group })}
-                                className="gap-2 text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Remove from Watchlist
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                        <DropdownMenu>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    aria-label={`Actions for ${group.name}`}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Actions</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/profile/${group.id}`} className="gap-2 cursor-pointer">
+                                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                                View Profile
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                              onClick={() => setRemoveGroupDialog({ open: true, group })}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              Remove from Watchlist
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
 
                       {/* Stats Row */}
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
                         <Badge variant="outline" className={`${getEngagementColor(group.engagementStatus)}`}>
-                          {group.engagementStatus}
+                          {normalizeEngagementStatus(group.engagementStatus)}
                         </Badge>
                         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <Users className="h-3.5 w-3.5" />
-                          {group.population.toLocaleString()}
+                          <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span aria-label={`Population: ${group.population.toLocaleString()}`}>
+                            {group.population.toLocaleString()}
+                          </span>
                         </span>
                         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" />
+                          <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                           Updated {group.lastUpdated}
                         </span>
                       </div>
 
-                      {/* Change Indicators */}
+                      {/* Change Indicators - Added tooltips explaining change logic */}
                       {group.changes.length > 0 && (
                         <div className="bg-muted/50 rounded-lg p-3 mt-3">
                           <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle className="h-4 w-4 text-accent" />
+                            <AlertCircle className="h-4 w-4 text-accent" aria-hidden="true" />
                             <span className="text-sm font-medium text-foreground">Changes since you last viewed</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className="h-4 w-4 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                                    aria-label="Learn about change indicators"
+                                  >
+                                    <Info className="h-4 w-4" aria-hidden="true" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>
+                                    Changes are detected by comparing the current data with the snapshot from your last
+                                    view of this group ({group.lastViewed}).
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {group.changes.includes("engagement") && group.engagementPrevious && (
-                              <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50">
-                                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                                <span className="text-xs">
-                                  <span className="text-muted-foreground">Engagement:</span>{" "}
-                                  <span className="line-through text-muted-foreground/60">
-                                    {group.engagementPrevious}
-                                  </span>{" "}
-                                  <span className="font-medium text-foreground">{group.engagementStatus}</span>
-                                </span>
-                              </div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50 cursor-help">
+                                      <TrendingUp className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
+                                      <span className="text-xs">
+                                        <span className="text-muted-foreground">Engagement:</span>{" "}
+                                        <span className="line-through text-muted-foreground/60">
+                                          {normalizeEngagementStatus(group.engagementPrevious)}
+                                        </span>{" "}
+                                        <span className="font-medium text-foreground">
+                                          {normalizeEngagementStatus(group.engagementStatus)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Engagement status changed since {group.lastViewed}</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                             {group.changes.includes("population") && group.populationChange !== null && (
-                              <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50">
-                                {group.populationChange > 0 ? (
-                                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
-                                ) : (
-                                  <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
-                                )}
-                                <span className="text-xs">
-                                  <span className="text-muted-foreground">Population:</span>{" "}
-                                  <span
-                                    className={`font-medium ${
-                                      group.populationChange > 0 ? "text-emerald-600" : "text-red-600"
-                                    }`}
-                                  >
-                                    {group.populationChange > 0 ? "+" : ""}
-                                    {group.populationChange.toLocaleString()}
-                                  </span>
-                                </span>
-                              </div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50 cursor-help">
+                                      {group.populationChange > 0 ? (
+                                        <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
+                                      ) : (
+                                        <ArrowDownRight className="h-3.5 w-3.5 text-red-500" aria-hidden="true" />
+                                      )}
+                                      <span className="text-xs">
+                                        <span className="text-muted-foreground">Population:</span>{" "}
+                                        <span
+                                          className={`font-medium ${
+                                            group.populationChange > 0
+                                              ? "text-emerald-600 dark:text-emerald-400"
+                                              : "text-red-600 dark:text-red-400"
+                                          }`}
+                                        >
+                                          {group.populationChange > 0 ? "+" : ""}
+                                          {group.populationChange.toLocaleString()}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Population estimate changed since {group.lastViewed}</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                             {group.changes.includes("updated") && (
-                              <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50">
-                                <RefreshCw className="h-3.5 w-3.5 text-blue-500" />
-                                <span className="text-xs">
-                                  <span className="text-muted-foreground">Data updated</span>{" "}
-                                  <span className="font-medium text-foreground">{group.lastUpdated}</span>
-                                </span>
-                              </div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 bg-background rounded-md px-3 py-1.5 border border-border/50 cursor-help">
+                                      <RefreshCw className="h-3.5 w-3.5 text-blue-500" aria-hidden="true" />
+                                      <span className="text-xs">
+                                        <span className="text-muted-foreground">Data updated</span>{" "}
+                                        <span className="font-medium text-foreground">{group.lastUpdated}</span>
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Source data was refreshed {group.lastUpdated}</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </div>
                         </div>
@@ -560,34 +583,30 @@ export function WatchlistPage() {
                       <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/50">
                         <span className="text-xs text-muted-foreground">Sources:</span>
                         {group.sources.map((source) => (
-                          <Badge key={source} variant="outline" className="text-xs font-normal">
+                          <Badge key={source} variant="outline" className="text-xs px-2 py-0.5 bg-muted/50">
                             {source}
                           </Badge>
                         ))}
-                        <span className="text-xs text-muted-foreground ml-auto">Last viewed {group.lastViewed}</span>
                       </div>
                     </div>
                   </div>
                 </Card>
               ))}
-
-              {filteredGroups.length === 0 && (
-                <div className="text-center py-16">
-                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <Eye className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium text-foreground mb-2">No watched groups found</h3>
-                  <p className="text-muted-foreground mb-6">
-                    {selectedCollection === "all"
-                      ? "Start watching people groups to track changes"
-                      : "No groups in this collection match your search"}
-                  </p>
-                  <Button variant="outline" asChild>
-                    <Link href="/search">Browse People Groups</Link>
-                  </Button>
-                </div>
-              )}
             </div>
+
+            {filteredGroups.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">No groups found</h3>
+                <p className="text-muted-foreground">
+                  {searchQuery
+                    ? "Try adjusting your search terms."
+                    : "Add people groups to your watchlist to track changes."}
+                </p>
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -601,30 +620,23 @@ export function WatchlistPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="collection-name">Name</Label>
-              <Input id="collection-name" placeholder="e.g., Field Research 2024" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="collection-description">Description (optional)</Label>
-              <Textarea id="collection-description" placeholder="Add a description..." rows={3} />
-            </div>
-            <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex gap-2">
-                {["red", "blue", "amber", "emerald", "purple", "pink"].map((color) => (
-                  <button
-                    key={color}
-                    className={`h-8 w-8 rounded-full bg-${color}-500 hover:ring-2 hover:ring-offset-2 hover:ring-${color}-500 transition-all`}
-                  />
-                ))}
-              </div>
+              <Label htmlFor="collection-name">Collection name</Label>
+              <Input
+                id="collection-name"
+                placeholder="e.g., South Asia Focus"
+                value={newCollectionName}
+                onChange={(e) => setNewCollectionName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateCollection()}
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateCollectionDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setCreateCollectionDialog(false)}>Create Collection</Button>
+            <Button onClick={handleCreateCollection} disabled={!newCollectionName.trim()}>
+              Create
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -632,24 +644,37 @@ export function WatchlistPage() {
       {/* Rename Collection Dialog */}
       <Dialog
         open={renameCollectionDialog.open}
-        onOpenChange={(open) => setRenameCollectionDialog({ open, collection: null })}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenameCollectionDialog({ open: false, collection: null })
+            setNewCollectionName("")
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Collection</DialogTitle>
-            <DialogDescription>Update the name for this collection.</DialogDescription>
+            <DialogDescription>Enter a new name for this collection.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="rename-name">Name</Label>
-              <Input id="rename-name" defaultValue={renameCollectionDialog.collection?.name} />
+              <Label htmlFor="rename-collection">Collection name</Label>
+              <Input
+                id="rename-collection"
+                placeholder="Collection name"
+                value={newCollectionName}
+                onChange={(e) => setNewCollectionName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleRenameCollection()}
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenameCollectionDialog({ open: false, collection: null })}>
               Cancel
             </Button>
-            <Button onClick={() => setRenameCollectionDialog({ open: false, collection: null })}>Save Changes</Button>
+            <Button onClick={handleRenameCollection} disabled={!newCollectionName.trim()}>
+              Rename
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -657,54 +682,67 @@ export function WatchlistPage() {
       {/* Delete Collection Dialog */}
       <Dialog
         open={deleteCollectionDialog.open}
-        onOpenChange={(open) => setDeleteCollectionDialog({ open, collection: null })}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCollectionDialog({ open: false, collection: null })
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Collection</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deleteCollectionDialog.collection?.name}"? The watched groups will be
-              moved to "All Watched".
+              Are you sure you want to delete &quot;{deleteCollectionDialog.collection?.name}&quot;? The people groups
+              will remain in your watchlist.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteCollectionDialog({ open: false, collection: null })}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => setDeleteCollectionDialog({ open: false, collection: null })}>
-              Delete Collection
+            <Button variant="destructive" onClick={handleDeleteCollection}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Remove from Watchlist Dialog */}
+      {/* Remove Group Dialog */}
       <Dialog
-        open={removeFromWatchlistDialog.open}
-        onOpenChange={(open) => setRemoveFromWatchlistDialog({ open, group: null })}
+        open={removeGroupDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setRemoveGroupDialog({ open: false, group: null })
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remove from Watchlist</DialogTitle>
             <DialogDescription>
-              Are you sure you want to stop watching "{removeFromWatchlistDialog.group?.name}"? You can always add it
-              back later.
+              Are you sure you want to remove &quot;{removeGroupDialog.group?.name}&quot; from your watchlist?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveFromWatchlistDialog({ open: false, group: null })}>
+            <Button variant="outline" onClick={() => setRemoveGroupDialog({ open: false, group: null })}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => setRemoveFromWatchlistDialog({ open: false, group: null })}>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                toast({
+                  title: "Removed from watchlist",
+                  description: `"${removeGroupDialog.group?.name}" has been removed.`,
+                })
+                setRemoveGroupDialog({ open: false, group: null })
+              }}
+            >
               Remove
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppLayout>
   )
 }
 
+// Collections Sidebar Component
 function CollectionsSidebar({
   collections,
   selectedCollection,
@@ -713,126 +751,99 @@ function CollectionsSidebar({
   onRenameCollection,
   onDeleteCollection,
 }: {
-  collections: typeof import("./watchlist-page").collections
+  collections: typeof mockCollections
   selectedCollection: string
   setSelectedCollection: (id: string) => void
   onCreateCollection: () => void
-  onRenameCollection: (c: (typeof collections)[0]) => void
-  onDeleteCollection: (c: (typeof collections)[0]) => void
+  onRenameCollection: (collection: (typeof mockCollections)[0]) => void
+  onDeleteCollection: (collection: (typeof mockCollections)[0]) => void
 }) {
-  const [expandedCollections, setExpandedCollections] = useState(true)
-
   return (
-    <div className="space-y-6">
-      {/* Collections */}
-      <div>
-        <button
-          onClick={() => setExpandedCollections(!expandedCollections)}
-          className="flex items-center justify-between w-full text-sm font-medium text-foreground mb-3"
-        >
-          Collections
-          {expandedCollections ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
-        {expandedCollections && (
-          <div className="space-y-1">
-            {collections.map((collection) => {
-              const Icon = collection.icon
-              const isSelected = selectedCollection === collection.id
-              const isAllWatched = collection.id === "all"
-
-              return (
-                <div
-                  key={collection.id}
-                  className={`flex items-center justify-between rounded-lg px-3 py-2.5 cursor-pointer transition-colors group ${
-                    isSelected
-                      ? "bg-accent/10 text-accent"
-                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setSelectedCollection(collection.id)}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <Icon className={`h-4 w-4 flex-shrink-0 ${isAllWatched ? "" : collection.color}`} />
-                    <span className="text-sm truncate">{collection.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded ${
-                        isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground"
-                      }`}
-                    >
-                      {collection.count}
-                    </span>
-                    {!isAllWatched && (
-                      <DropdownMenu>
+    <div className="space-y-4">
+      {/* Collections List */}
+      <nav aria-label="Collections">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Collections</h2>
+        <div className="space-y-1" role="listbox" aria-label="Select collection">
+          {collections.map((collection) => (
+            <div key={collection.id} className="group flex items-center gap-2">
+              <button
+                onClick={() => setSelectedCollection(collection.id)}
+                role="option"
+                aria-selected={selectedCollection === collection.id}
+                className={`flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  selectedCollection === collection.id
+                    ? "bg-accent/10 text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <div className={`h-2.5 w-2.5 rounded-full ${collection.color}`} aria-hidden="true" />
+                <span className="flex-1 text-left truncate">{collection.name}</span>
+                <span className="text-xs tabular-nums">{collection.count}</span>
+              </button>
+              {collection.id !== "all" && (
+                <DropdownMenu>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
-                          <button
-                            className="h-6 w-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-background transition-all"
-                            onClick={(e) => e.stopPropagation()}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            aria-label={`Actions for ${collection.name}`}
                           >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </button>
+                            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                          </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onRenameCollection(collection)
-                            }}
-                            className="gap-2"
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onDeleteCollection(collection)
-                            }}
-                            className="gap-2 text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Collection actions</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onRenameCollection(collection)}>
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                      onClick={() => onDeleteCollection(collection)}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          ))}
+        </div>
+      </nav>
 
       {/* Create Collection Button */}
       <Button variant="outline" className="w-full gap-2 bg-transparent" onClick={onCreateCollection}>
-        <Plus className="h-4 w-4" />
+        <Plus className="h-4 w-4" aria-hidden="true" />
         New Collection
       </Button>
 
       {/* Legend */}
       <div className="pt-4 border-t border-border/50">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Change Indicators</h4>
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Change Indicators</h3>
         <div className="space-y-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
             <span>Engagement improved</span>
           </div>
           <div className="flex items-center gap-2">
-            <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+            <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
             <span>Population increased</span>
           </div>
           <div className="flex items-center gap-2">
-            <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+            <ArrowDownRight className="h-3.5 w-3.5 text-red-500" aria-hidden="true" />
             <span>Population decreased</span>
           </div>
           <div className="flex items-center gap-2">
-            <RefreshCw className="h-3.5 w-3.5 text-blue-500" />
+            <RefreshCw className="h-3.5 w-3.5 text-blue-500" aria-hidden="true" />
             <span>Data updated</span>
           </div>
         </div>

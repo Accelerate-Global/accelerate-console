@@ -32,12 +32,22 @@ export function AppFooter() {
     }
   }
 
-  const links = [
+  const resourceLinks = [
     { label: "Methodology", href: "/methodology" },
     { label: "Data Sources", href: "/data-sources" },
+    { label: "Changelog", href: "/changelog" },
+  ]
+
+  const legalLinks = [
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
+    { label: "Accessibility", href: "/accessibility" },
+  ]
+
+  const supportLinks = [
     { label: "Contact", href: "/contact" },
+    { label: "Support", href: "/support" },
+    { label: "Feedback", href: "/feedback" },
   ]
 
   const socialLinks = [
@@ -47,7 +57,7 @@ export function AppFooter() {
   ]
 
   return (
-    <footer className="border-t border-border/50 bg-card">
+    <footer className="border-t border-border/50 bg-card" role="contentinfo">
       <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
@@ -57,37 +67,78 @@ export function AppFooter() {
               We believe transparent, well-sourced data enables collaboration across organizations and supports wise,
               informed decisions for those working to serve the world&apos;s people groups.
             </p>
+            <p className="text-xs text-muted-foreground/70 mt-4 leading-relaxed">
+              Data is aggregated from multiple sources and may contain inaccuracies. Please verify critical information
+              independently.
+            </p>
           </div>
 
-          {/* Links */}
-          <div className="md:col-span-3 md:pl-8">
-            <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Resources</h4>
-            <ul className="space-y-2.5">
-              {links.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Links Columns */}
+          <div className="md:col-span-5 grid grid-cols-3 gap-6">
+            {/* Resources */}
+            <div>
+              <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Resources</h4>
+              <ul className="space-y-2.5">
+                {resourceLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Legal</h4>
+              <ul className="space-y-2.5">
+                {legalLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Support</h4>
+              <ul className="space-y-2.5">
+                {supportLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Data Updates Signup */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-3">
             <div className="bg-secondary/50 rounded-xl p-5 border border-border/50">
               <div className="flex items-center gap-2 mb-1.5">
-                <Mail className="h-4 w-4 text-accent" />
+                <Mail className="h-4 w-4 text-accent" aria-hidden="true" />
                 <h4 className="text-sm font-medium text-foreground">Data updates</h4>
               </div>
               <p className="text-xs text-muted-foreground mb-4">Get notified when datasets refresh.</p>
 
               {status === "success" ? (
-                <div className="flex items-center gap-2 py-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <div className="flex items-center gap-2 py-2" role="status" aria-live="polite">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
                   <span className="text-sm text-green-600">You&apos;re subscribed! We&apos;ll be in touch.</span>
                 </div>
               ) : (
@@ -104,6 +155,7 @@ export function AppFooter() {
                       className="flex-1 h-9 text-sm bg-card border-border"
                       required
                       aria-label="Email address for data updates"
+                      aria-describedby="email-consent"
                     />
                     <Button
                       type="submit"
@@ -114,9 +166,16 @@ export function AppFooter() {
                       {status === "loading" ? "..." : "Subscribe"}
                     </Button>
                   </div>
+                  <p id="email-consent" className="text-[10px] text-muted-foreground/70">
+                    By subscribing, you agree to our{" "}
+                    <Link href="/privacy" className="underline hover:text-foreground">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
                   {status === "error" && (
-                    <div className="flex items-center gap-1.5">
-                      <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                    <div className="flex items-center gap-1.5" role="alert">
+                      <AlertCircle className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />
                       <span className="text-xs text-destructive">{errorMessage}</span>
                     </div>
                   )}
@@ -140,9 +199,9 @@ export function AppFooter() {
                   href={social.href}
                   tooltip={social.label}
                   external
-                  className="h-8 w-8 rounded-full bg-secondary/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  className="h-8 w-8 rounded-full bg-secondary/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">{social.label}</span>
                 </TooltipLink>
               )
