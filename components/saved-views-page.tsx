@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Search,
   Plus,
@@ -159,6 +160,7 @@ type TagItem = (typeof initialTags)[number]
 
 export function SavedViewsPage() {
   const { toast } = useToast()
+  const router = useRouter()
 
   const [folders, setFolders] = useState<FolderItem[]>(initialFolders)
   const [tags, setTags] = useState<TagItem[]>(initialTags)
@@ -280,7 +282,8 @@ export function SavedViewsPage() {
   }
 
   const handleOpenView = (view: SavedView) => {
-    toast({ title: "Opening view...", description: `Loading "${view.name}" results.` })
+    toast({ title: "Applied view (placeholder)", description: `Loading "${view.name}" results.` })
+    router.push(`/search?view=${view.id}`)
   }
 
   const handleDuplicateView = (view: SavedView) => {

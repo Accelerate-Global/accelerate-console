@@ -29,7 +29,7 @@ function PlaceholderSocialIcon({ icon: Icon, label }: { icon: React.ElementType;
         type="button"
         aria-disabled="true"
         aria-label={`${label} (Coming soon)`}
-        className="h-8 w-8 rounded-full bg-secondary/70 flex items-center justify-center text-muted-foreground hover:text-muted-foreground/80 cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="h-10 w-10 rounded-full bg-secondary/70 inline-flex items-center justify-center text-muted-foreground hover:text-muted-foreground/80 cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -77,7 +77,7 @@ export function AppFooter() {
             </p>
           </div>
 
-          {/* Links Columns - Using PlaceholderLink instead of Link */}
+          {/* Links Columns */}
           <div className="md:col-span-5 grid grid-cols-3 gap-6">
             {/* Resources */}
             <div>
@@ -126,21 +126,21 @@ export function AppFooter() {
               <p className="text-xs text-muted-foreground mb-4">Get notified when datasets refresh.</p>
 
               <form onSubmit={handleSubscribe} className="space-y-3">
-                <div className="flex flex-col lg:flex-row gap-2">
+                <div className="flex flex-col gap-3">
                   <Input
                     type="email"
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-10 text-sm bg-card border-border px-3"
+                    className="w-full h-11 text-sm bg-card border-border px-4"
                     required
                     aria-label="Email address for data updates"
                     aria-describedby="email-consent"
                   />
                   <Button
                     type="submit"
-                    size="sm"
-                    className="w-full lg:w-auto h-10 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    size="default"
+                    className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground cursor-pointer"
                   >
                     Subscribe
                   </Button>
@@ -159,7 +159,7 @@ export function AppFooter() {
           </div>
         </div>
 
-        {/* Bottom Row - Using PlaceholderSocialIcon */}
+        {/* Bottom Row */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Accelerate Global. All rights reserved.

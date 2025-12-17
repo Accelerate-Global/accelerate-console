@@ -12,9 +12,9 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   size?: "default" | "sm" | "lg" | "icon"
   asChild?: boolean
   children?: React.ReactNode
+  tooltipSide?: "top" | "right" | "bottom" | "left"
 }
 
-// Added hidden class on touch devices via CSS media query
 export function IconButton({
   tooltip,
   icon,
@@ -22,18 +22,36 @@ export function IconButton({
   size = "icon",
   className,
   children,
+  disabled,
+  tooltipSide = "top",
   ...props
 }: IconButtonProps) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant={variant} size={size} className={cn("", className)} aria-label={tooltip} {...props}>
+          <Button
+            variant={variant}
+            size={size}
+            className={cn(
+              // Core centering and sizing
+              "inline-flex items-center justify-center",
+              // Consistent square sizing for icon-only buttons
+              size === "icon" && "h-10 w-10",
+              size === "sm" && "h-8 w-8",
+              // Cursor states
+              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              className,
+            )}
+            aria-label={tooltip}
+            disabled={disabled}
+            {...props}
+          >
             {icon}
             {children}
           </Button>
         </TooltipTrigger>
-        <TooltipContent sideOffset={4} className="tooltip-content">
+        <TooltipContent side={tooltipSide} sideOffset={4} className="tooltip-content">
           <p>{tooltip}</p>
         </TooltipContent>
       </Tooltip>
@@ -56,7 +74,7 @@ export function TooltipLink({ tooltip, href, children, className, external }: To
         <TooltipTrigger asChild>
           <a
             href={href}
-            className={className}
+            className={cn("cursor-pointer", className)}
             aria-label={tooltip}
             {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           >

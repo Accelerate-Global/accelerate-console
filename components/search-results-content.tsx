@@ -520,21 +520,22 @@ export function SearchResultsContent() {
 
         {!isMobile && (
           <Sheet open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
-            <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col" hideCloseButton>
+            <SheetContent className="w-full sm:max-w-lg flex flex-col h-full p-0" hideCloseButton>
               {selectedResult && (
                 <>
+                  {/* Sticky Header with proper padding */}
                   <div className="sticky top-0 z-10 bg-background border-b border-border/50 shrink-0">
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1 pt-0.5">
-                          <SheetTitle className="text-xl font-bold text-foreground leading-tight line-clamp-2">
+                        <div className="min-w-0 flex-1">
+                          <SheetTitle className="text-xl font-bold text-foreground leading-tight line-clamp-2 pr-2">
                             {selectedResult.name}
                           </SheetTitle>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
                                 onClick={() => copyAxId(selectedResult.axId)}
-                                className="inline-flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1 -mx-1"
+                                className="inline-flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1 -mx-1"
                                 aria-label={`Copy ${selectedResult.axId}`}
                               >
                                 {selectedResult.axId}
@@ -550,7 +551,7 @@ export function SearchResultsContent() {
                           <TooltipTrigger asChild>
                             <button
                               onClick={() => setSelectedResult(null)}
-                              className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring -mt-0.5 -mr-1"
+                              className="h-10 w-10 rounded-lg inline-flex items-center justify-center hover:bg-muted transition-colors shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               aria-label="Close preview"
                             >
                               <X className="h-5 w-5" aria-hidden="true" />
@@ -562,6 +563,7 @@ export function SearchResultsContent() {
                     </div>
                   </div>
 
+                  {/* Scrollable Content */}
                   <ScrollArea className="flex-1 min-h-0">
                     <div className="p-6 space-y-6">
                       {/* Key Stats */}
@@ -620,8 +622,9 @@ export function SearchResultsContent() {
                     </div>
                   </ScrollArea>
 
-                  <div className="sticky bottom-0 p-6 border-t border-border/50 bg-background shrink-0">
-                    <Button asChild className="w-full h-12 rounded-xl gap-2">
+                  {/* Sticky Footer with safe-area padding */}
+                  <div className="sticky bottom-0 z-10 bg-background border-t border-border/50 shrink-0 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+                    <Button asChild className="w-full h-12 rounded-xl gap-2 cursor-pointer">
                       <Link href={`/profile/${selectedResult.id}`}>
                         Open full profile
                         <ExternalLink className="h-4 w-4" aria-hidden="true" />

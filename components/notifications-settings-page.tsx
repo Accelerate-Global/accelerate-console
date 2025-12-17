@@ -1,13 +1,9 @@
 "use client"
 
 import { Checkbox } from "@/components/ui/checkbox"
-
-import { RadioGroupItem } from "@/components/ui/radio-group"
-
-import { RadioGroup } from "@/components/ui/radio-group"
-
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useState, useCallback } from "react"
-import { Bell, Mail, Smartphone, Users, TrendingUp, Database, RefreshCw, Clock, Settings2 } from "lucide-react"
+import { Bell, Mail, Smartphone, Users, TrendingUp, Database, RefreshCw, Clock, Settings2, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -15,9 +11,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetClose } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { AppLayout } from "@/components/app-layout"
 
@@ -196,83 +192,102 @@ function WatchlistOverrideSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="text-left">Customize: {watchlist.name}</SheetTitle>
-          <p className="text-sm text-muted-foreground text-left">{watchlist.itemCount} people groups</p>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto py-6 space-y-6">
-          {/* Override Frequency */}
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Notification Frequency</Label>
-            <RadioGroup value={overrideFrequency} onValueChange={setOverrideFrequency} className="space-y-2">
-              <label
-                htmlFor="override-immediate"
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  overrideFrequency === "immediate" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
-                }`}
-              >
-                <RadioGroupItem value="immediate" id="override-immediate" />
-                <span className="text-sm">Immediate</span>
-              </label>
-              <label
-                htmlFor="override-daily"
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  overrideFrequency === "daily" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
-                }`}
-              >
-                <RadioGroupItem value="daily" id="override-daily" />
-                <span className="text-sm">Daily digest</span>
-              </label>
-              <label
-                htmlFor="override-weekly"
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  overrideFrequency === "weekly" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
-                }`}
-              >
-                <RadioGroupItem value="weekly" id="override-weekly" />
-                <span className="text-sm">Weekly digest</span>
-              </label>
-            </RadioGroup>
-          </div>
-
-          <Separator />
-
-          {/* Override Change Types */}
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Change Types</Label>
-            <div className="space-y-3">
-              {CHANGE_TYPES.map((type) => (
-                <label
-                  key={type.id}
-                  htmlFor={`override-${type.id}`}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    overrideChangeTypes[type.id] ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
-                  }`}
-                >
-                  <Checkbox
-                    id={`override-${type.id}`}
-                    checked={overrideChangeTypes[type.id]}
-                    onCheckedChange={() => toggleOverrideChangeType(type.id)}
-                  />
-                  <div className="flex-1">
-                    <span className="text-sm font-medium">{type.label}</span>
-                  </div>
-                </label>
-              ))}
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full p-0">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-background border-b border-border shrink-0">
+          <div className="flex items-center justify-between p-6">
+            <div className="min-w-0 flex-1">
+              <SheetTitle className="text-lg font-semibold truncate">Customize: {watchlist.name}</SheetTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">{watchlist.itemCount} people groups</p>
             </div>
+            <SheetClose asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 shrink-0 -mr-2 cursor-pointer inline-flex items-center justify-center"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </SheetClose>
           </div>
         </div>
 
-        <SheetFooter className="border-t border-border pt-4 flex-row gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 min-h-[44px]">
-            Cancel
-          </Button>
-          <Button onClick={handleSaveOverride} className="flex-1 min-h-[44px]">
-            Save override
-          </Button>
-        </SheetFooter>
+        {/* Scrollable Content */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-6 space-y-6">
+            {/* Override Frequency Card */}
+            <div className="rounded-lg border border-border p-4">
+              <Label className="text-sm font-medium mb-4 block">Notification Frequency</Label>
+              <RadioGroup value={overrideFrequency} onValueChange={setOverrideFrequency} className="space-y-2">
+                <label
+                  htmlFor="override-immediate"
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors min-h-[48px] ${
+                    overrideFrequency === "immediate"
+                      ? "border-accent/50 bg-accent/5"
+                      : "border-border border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <RadioGroupItem value="immediate" id="override-immediate" />
+                  <span className="text-sm">Immediate</span>
+                </label>
+                <label
+                  htmlFor="override-daily"
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors min-h-[48px] ${
+                    overrideFrequency === "daily" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <RadioGroupItem value="daily" id="override-daily" />
+                  <span className="text-sm">Daily digest</span>
+                </label>
+                <label
+                  htmlFor="override-weekly"
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors min-h-[48px] ${
+                    overrideFrequency === "weekly" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <RadioGroupItem value="weekly" id="override-weekly" />
+                  <span className="text-sm">Weekly digest</span>
+                </label>
+              </RadioGroup>
+            </div>
+
+            {/* Override Change Types Card */}
+            <div className="rounded-lg border border-border p-4">
+              <Label className="text-sm font-medium mb-4 block">Change Types</Label>
+              <div className="space-y-2">
+                {CHANGE_TYPES.map((type) => (
+                  <label
+                    key={type.id}
+                    htmlFor={`override-${type.id}`}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors min-h-[48px] ${
+                      overrideChangeTypes[type.id] ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <Checkbox
+                      id={`override-${type.id}`}
+                      checked={overrideChangeTypes[type.id]}
+                      onCheckedChange={() => toggleOverrideChangeType(type.id)}
+                    />
+                    <span className="text-sm">{type.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+
+        {/* Sticky Footer with safe-area padding */}
+        <div className="sticky bottom-0 z-10 bg-background border-t border-border shrink-0 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12 cursor-pointer">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveOverride} className="flex-1 h-12 cursor-pointer">
+              Save override
+            </Button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   )
