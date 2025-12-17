@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Search,
@@ -137,6 +138,7 @@ const mockWatchedGroups = [
 
 export function WatchlistPage() {
   const { toast } = useToast()
+  const router = useRouter()
   const [collections, setCollections] = useState(mockCollections)
   const [selectedCollection, setSelectedCollection] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -223,6 +225,19 @@ export function WatchlistPage() {
       description: "The collection has been removed.",
     })
   }
+
+  const handleCompareSelected = useCallback(() => {
+    const axIds = selectedGroups
+      .map((groupId) => {
+        const group = mockWatchedGroups.find((g) => g.id === groupId)
+        return group?.axId
+      })
+      .filter(Boolean)
+
+    if (axIds.length >= 2) {
+      router.push(`/compare?ids=${axIds.join(",")}`)
+    }
+  }, [selectedGroups, router])
 
   return (
     <AppLayout>
@@ -349,6 +364,7 @@ export function WatchlistPage() {
                         className="gap-2 min-h-[40px]"
                         disabled={selectedGroups.length < 2}
                         aria-describedby={selectedGroups.length < 2 ? "compare-hint" : undefined}
+                        onClick={handleCompareSelected}
                       >
                         <GitCompare className="h-4 w-4" aria-hidden="true" />
                         Compare Selected

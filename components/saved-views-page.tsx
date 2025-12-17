@@ -405,19 +405,38 @@ export function SavedViewsPage() {
                     {filteredViews.length} saved {filteredViews.length === 1 ? "view" : "views"}
                   </p>
                 </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className="gap-2 min-h-[44px]"
-                      onClick={() => setNewViewDialog(true)}
-                      aria-label="Create new view"
-                    >
-                      <Plus className="h-4 w-4" />
-                      New View
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Create new view</TooltipContent>
-                </Tooltip>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="gap-2 min-h-[44px] bg-transparent"
+                        asChild
+                        aria-label="Go to search"
+                      >
+                        <Link href="/search">
+                          <Search className="h-4 w-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">Start new search</span>
+                          <span className="sm:hidden">Search</span>
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Go to search</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="gap-2 min-h-[44px]"
+                        onClick={() => setNewViewDialog(true)}
+                        aria-label="Create new view"
+                      >
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        New View
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Create new view</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
 
               {/* Search Bar */}
@@ -691,7 +710,7 @@ export function SavedViewsPage() {
                           : "border-border hover:border-muted-foreground"
                       }`}
                     >
-                      <span className={`h-2 w-2 rounded-full ${tag.color}`} />
+                      <span className={`h-2.5 w-2.5 rounded-full ${tag.color}`} />
                       {tag.name}
                       {newViewForm.tags.includes(tag.name) && <Check className="h-3 w-3" />}
                     </button>
@@ -1070,26 +1089,6 @@ function SidebarContent({
             )
           })}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="pt-4 border-t border-border">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2 bg-transparent"
-              asChild
-              aria-label="Start a new search"
-            >
-              <Link href="/search">
-                <Search className="h-4 w-4" />
-                New Search
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Start a new search</TooltipContent>
-        </Tooltip>
       </div>
     </div>
   )

@@ -126,13 +126,13 @@ export function AppFooter() {
               <p className="text-xs text-muted-foreground mb-4">Get notified when datasets refresh.</p>
 
               <form onSubmit={handleSubscribe} className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col lg:flex-row gap-2">
                   <Input
                     type="email"
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1 h-9 text-sm bg-card border-border"
+                    className="w-full h-10 text-sm bg-card border-border px-3"
                     required
                     aria-label="Email address for data updates"
                     aria-describedby="email-consent"
@@ -140,7 +140,7 @@ export function AppFooter() {
                   <Button
                     type="submit"
                     size="sm"
-                    className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="w-full lg:w-auto h-10 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
                   >
                     Subscribe
                   </Button>

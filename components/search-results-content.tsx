@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Search,
   Filter,
@@ -188,8 +190,10 @@ const TOTAL_RESULTS = 17446
 const PAGE_SIZE = 6
 
 export function SearchResultsContent() {
+  const router = useRouter()
   const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState("")
+  const isMobile = useIsMobile()
+  const [searchQuery, setSearchQuery] = useState("Baloch")
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({})
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
@@ -230,393 +234,407 @@ export function SearchResultsContent() {
     })
   }
 
+  const handleResultClick = (result: (typeof mockResults)[0]) => {
+    if (isMobile) {
+      // On mobile, navigate directly to full profile
+      router.push(`/profile/${result.id}`)
+    } else {
+      // On desktop, open the preview drawer
+      setSelectedResult(result)
+    }
+  }
+
   // Calculate displayed range
   const startIndex = 1
   const endIndex = Math.min(PAGE_SIZE, mockResults.length)
 
   return (
-    <div className="min-h-screen bg-background">
-      <TooltipProvider>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex">
-            {/* Desktop Facet Panel */}
-            <aside className="hidden lg:block w-72 border-r border-border/50 bg-card/30">
-              <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-                <div className="p-4 border-b border-border/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold text-foreground">Filters</h2>
-                    {activeFilterCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Clear all ({activeFilterCount})
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 space-y-1">
-                  {facetFilters.map((filter) => (
-                    <FacetFilter
-                      key={filter.id}
-                      filter={filter}
-                      selectedValues={selectedFilters[filter.id] || []}
-                      onToggle={toggleFilter}
-                      onClear={() => clearFilterGroup(filter.id)}
-                      searchQuery={facetSearchQueries[filter.id] || ""}
-                      onSearchChange={(query) => setFacetSearchQueries((prev) => ({ ...prev, [filter.id]: query }))}
-                    />
-                  ))}
-                </div>
-              </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 min-w-0">
-              {/* Sticky Controls Bar */}
-              <div className="sticky top-16 z-40 bg-card/95 backdrop-blur-sm border-b border-border/50">
-                <div className="px-4 md:px-6 py-3">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {/* Search Input */}
-                    <div className="relative flex-1">
-                      <Search
-                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Refine results..."
-                        className="pl-10 h-10"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        aria-label="Refine search results"
-                      />
-                      {searchQuery && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => setSearchQuery("")}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              aria-label="Clear search"
-                            >
-                              <X className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Clear search</TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-
-                    {/* Controls */}
-                    <div className="flex items-center gap-2">
-                      {/* Mobile Filters */}
-                      <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <SheetTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="lg:hidden h-10 w-10 relative bg-transparent"
-                                aria-label="Open filters"
-                              >
-                                <Filter className="h-4 w-4" aria-hidden="true" />
-                                {activeFilterCount > 0 && (
-                                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center">
-                                    {activeFilterCount}
-                                  </span>
-                                )}
-                              </Button>
-                            </SheetTrigger>
-                          </TooltipTrigger>
-                          <TooltipContent>Filters</TooltipContent>
-                        </Tooltip>
-                        <SheetContent side="left" className="w-80 p-0 flex flex-col" hideCloseButton>
-                          <SheetHeader className="p-4 border-b border-border/50">
-                            <div className="flex items-center justify-between">
-                              <SheetTitle>Filters</SheetTitle>
-                              {activeFilterCount > 0 && (
-                                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-7 text-xs">
-                                  Clear all
-                                </Button>
-                              )}
-                            </div>
-                          </SheetHeader>
-                          <ScrollArea className="flex-1 p-4">
-                            <div className="space-y-1">
-                              {facetFilters.map((filter) => (
-                                <FacetFilter
-                                  key={filter.id}
-                                  filter={filter}
-                                  selectedValues={selectedFilters[filter.id] || []}
-                                  onToggle={toggleFilter}
-                                  onClear={() => clearFilterGroup(filter.id)}
-                                  searchQuery={facetSearchQueries[filter.id] || ""}
-                                  onSearchChange={(query) =>
-                                    setFacetSearchQueries((prev) => ({ ...prev, [filter.id]: query }))
-                                  }
-                                />
-                              ))}
-                            </div>
-                          </ScrollArea>
-                          <div className="p-4 border-t border-border/50 bg-card safe-area-bottom">
-                            <Button className="w-full h-12 rounded-xl" onClick={() => setIsMobileFiltersOpen(false)}>
-                              Show {mockResults.length} results
-                            </Button>
-                          </div>
-                        </SheetContent>
-                      </Sheet>
-
-                      {/* Sort */}
-                      <Select defaultValue="relevance">
-                        <SelectTrigger className="w-[140px] h-10">
-                          <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="relevance">Relevance</SelectItem>
-                          <SelectItem value="population-desc">Population ↓</SelectItem>
-                          <SelectItem value="population-asc">Population ↑</SelectItem>
-                          <SelectItem value="updated">Recently Updated</SelectItem>
-                          <SelectItem value="name">Name A-Z</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* View Toggle */}
-                      <div
-                        className="flex items-center border border-border rounded-lg p-0.5 bg-muted/30"
-                        role="group"
-                        aria-label="View mode"
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => setViewMode("cards")}
-                              className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                                viewMode === "cards"
-                                  ? "bg-background shadow-sm text-foreground"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                              aria-label="Card view"
-                              aria-pressed={viewMode === "cards"}
-                            >
-                              <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Card view</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => setViewMode("table")}
-                              className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                                viewMode === "table"
-                                  ? "bg-background shadow-sm text-foreground"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                              aria-label="Table view"
-                              aria-pressed={viewMode === "table"}
-                            >
-                              <List className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Table view</TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      {/* Save View */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-10 w-10 bg-transparent"
-                            onClick={handleSaveView}
-                            aria-label="Save current view"
-                          >
-                            <Bookmark className="h-4 w-4" aria-hidden="true" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Save this view</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-
-                  {/* Active Filter Chips */}
-                  {activeFilterCount > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3" role="list" aria-label="Active filters">
-                      {Object.entries(selectedFilters).map(([filterId, values]) =>
-                        values.map((value) => {
-                          const filter = facetFilters.find((f) => f.id === filterId)
-                          const option = filter?.options.find((o) => o.value === value)
-                          return (
-                            <Badge
-                              key={`${filterId}-${value}`}
-                              variant="secondary"
-                              className="gap-1 pr-1 cursor-pointer hover:bg-secondary/80"
-                              onClick={() => toggleFilter(filterId, value)}
-                              role="listitem"
-                            >
-                              {option?.label || value}
-                              <X className="h-3 w-3 ml-1" aria-hidden="true" />
-                              <span className="sr-only">Remove filter</span>
-                            </Badge>
-                          )
-                        }),
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Results Count - Updated to "Showing 1–N of X" format */}
-              <div className="px-4 md:px-6 py-3 border-b border-border/30 bg-muted/20">
-                <p className="text-sm text-muted-foreground">
-                  Showing{" "}
-                  <span className="font-medium text-foreground">
-                    {startIndex}–{endIndex}
-                  </span>{" "}
-                  of <span className="font-medium text-foreground">{TOTAL_RESULTS.toLocaleString()}</span> results
-                </p>
-              </div>
-
-              {/* Results Area */}
-              <div className="p-4 md:p-6">
-                {viewMode === "cards" ? (
-                  <div
-                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-                    role="list"
-                    aria-label="Search results"
+    <TooltipProvider>
+      <div className="flex flex-col lg:flex-row min-h-0 flex-1">
+        {/* Desktop Facet Panel */}
+        <aside className="hidden lg:block w-72 border-r border-border/50 bg-card/30">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="p-4 border-b border-border/50">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-foreground">Filters</h2>
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    className="h-7 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    {mockResults.map((result) => (
-                      <ResultCard
-                        key={result.id}
-                        result={result}
-                        onClick={() => setSelectedResult(result)}
-                        onCopyId={() => copyAxId(result.axId)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <ResultsTable results={mockResults} onRowClick={setSelectedResult} onCopyId={copyAxId} />
+                    Clear all ({activeFilterCount})
+                  </Button>
                 )}
               </div>
-            </main>
+            </div>
+            <div className="p-4 space-y-1">
+              {facetFilters.map((filter) => (
+                <FacetFilter
+                  key={filter.id}
+                  filter={filter}
+                  selectedValues={selectedFilters[filter.id] || []}
+                  onToggle={toggleFilter}
+                  onClear={() => clearFilterGroup(filter.id)}
+                  searchQuery={facetSearchQueries[filter.id] || ""}
+                  onSearchChange={(query) => setFacetSearchQueries((prev) => ({ ...prev, [filter.id]: query }))}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Record Preview Drawer */}
-        <Sheet open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
-          <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col" hideCloseButton>
-            {selectedResult && (
-              <>
-                <SheetHeader className="p-4 md:p-6 border-b border-border/50 shrink-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <SheetTitle className="text-xl font-bold text-foreground truncate">
-                        {selectedResult.name}
-                      </SheetTitle>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => copyAxId(selectedResult.axId)}
-                            className="inline-flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                            aria-label={`Copy ${selectedResult.axId}`}
-                          >
-                            {selectedResult.axId}
-                            <Copy className="h-3 w-3" aria-hidden="true" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Copy AX ID</TooltipContent>
-                      </Tooltip>
-                    </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Sticky Controls Bar */}
+          <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+            <div className="p-3 md:p-4">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                {/* Search Input */}
+                <div className="relative flex-1 min-w-[250px]">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Refine results..."
+                    className="pl-10 h-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Refine search results"
+                  />
+                  {searchQuery && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          onClick={() => setSelectedResult(null)}
-                          className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          aria-label="Close preview"
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label="Clear search"
                         >
-                          <X className="h-4 w-4" aria-hidden="true" />
+                          <X className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>Close</TooltipContent>
+                      <TooltipContent>Clear search</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center gap-2 md:gap-3">
+                  {/* Mobile Filters */}
+                  <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SheetTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="lg:hidden h-10 w-10 relative bg-transparent"
+                            aria-label="Open filters"
+                          >
+                            <Filter className="h-4 w-4" aria-hidden="true" />
+                            {activeFilterCount > 0 && (
+                              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center">
+                                {activeFilterCount}
+                              </span>
+                            )}
+                          </Button>
+                        </SheetTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>Filters</TooltipContent>
+                    </Tooltip>
+                    <SheetContent side="left" className="w-80 p-0 flex flex-col" hideCloseButton>
+                      <SheetHeader className="p-4 border-b border-border/50">
+                        <div className="flex items-center justify-between">
+                          <SheetTitle>Filters</SheetTitle>
+                          {activeFilterCount > 0 && (
+                            <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-7 text-xs">
+                              Clear all
+                            </Button>
+                          )}
+                        </div>
+                      </SheetHeader>
+                      <ScrollArea className="flex-1">
+                        <div className="p-4 space-y-1">
+                          {facetFilters.map((filter) => (
+                            <FacetFilter
+                              key={filter.id}
+                              filter={filter}
+                              selectedValues={selectedFilters[filter.id] || []}
+                              onToggle={toggleFilter}
+                              onClear={() => clearFilterGroup(filter.id)}
+                              searchQuery={facetSearchQueries[filter.id] || ""}
+                              onSearchChange={(query) =>
+                                setFacetSearchQueries((prev) => ({ ...prev, [filter.id]: query }))
+                              }
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <div className="p-4 border-t border-border/50 bg-card safe-area-bottom">
+                        <Button className="w-full h-12 rounded-xl" onClick={() => setIsMobileFiltersOpen(false)}>
+                          Show {mockResults.length} results
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+
+                  {/* Sort */}
+                  <Select defaultValue="relevance">
+                    <SelectTrigger className="w-[140px] h-10">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevance">Relevance</SelectItem>
+                      <SelectItem value="population-desc">Population ↓</SelectItem>
+                      <SelectItem value="population-asc">Population ↑</SelectItem>
+                      <SelectItem value="updated">Recently Updated</SelectItem>
+                      <SelectItem value="name">Name A-Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div
+                    className="hidden md:flex items-center border border-border rounded-lg p-0.5 bg-muted/30"
+                    role="group"
+                    aria-label="View mode"
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setViewMode("cards")}
+                          className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            viewMode === "cards"
+                              ? "bg-background shadow-sm text-foreground"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          aria-label="Card view"
+                          aria-pressed={viewMode === "cards"}
+                        >
+                          <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Card view</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setViewMode("table")}
+                          className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            viewMode === "table"
+                              ? "bg-background shadow-sm text-foreground"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          aria-label="Table view"
+                          aria-pressed={viewMode === "table"}
+                        >
+                          <List className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Table view</TooltipContent>
                     </Tooltip>
                   </div>
-                </SheetHeader>
 
-                <ScrollArea className="flex-1">
-                  <div className="p-4 md:p-6 space-y-6">
-                    {/* Key Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-muted/30 rounded-lg p-3">
-                        <div className="text-xs text-muted-foreground mb-1">Engagement</div>
-                        <Badge variant="outline" className={getEngagementColor(selectedResult.engagementStatus)}>
-                          {selectedResult.engagementStatus}
-                        </Badge>
+                  {/* Save View */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 bg-transparent"
+                        onClick={handleSaveView}
+                        aria-label="Save current view"
+                      >
+                        <Bookmark className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Save this view</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Filter Chips */}
+            {activeFilterCount > 0 && (
+              <div className="px-3 md:px-4 pb-2 flex flex-wrap gap-2" role="list" aria-label="Active filters">
+                {Object.entries(selectedFilters).map(([filterId, values]) =>
+                  values.map((value) => {
+                    const filter = facetFilters.find((f) => f.id === filterId)
+                    const option = filter?.options.find((o) => o.value === value)
+                    return (
+                      <Badge
+                        key={`${filterId}-${value}`}
+                        variant="secondary"
+                        className="gap-1 pr-1 cursor-pointer hover:bg-secondary/80"
+                        onClick={() => toggleFilter(filterId, value)}
+                        role="listitem"
+                      >
+                        {option?.label || value}
+                        <X className="h-3 w-3 ml-1" aria-hidden="true" />
+                        <span className="sr-only">Remove filter</span>
+                      </Badge>
+                    )
+                  }),
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Results Count - Updated to "Showing 1–N of X" format */}
+          <div className="px-4 md:px-6 py-3 border-b border-border/30 bg-muted/20">
+            <p className="text-sm text-muted-foreground">
+              Showing{" "}
+              <span className="font-medium text-foreground">
+                {startIndex}–{endIndex}
+              </span>{" "}
+              of <span className="font-medium text-foreground">{TOTAL_RESULTS.toLocaleString()}</span> results
+            </p>
+          </div>
+
+          {/* Results Area */}
+          <ScrollArea className="flex-1">
+            <div className="p-4 md:p-6">
+              {/* Results Grid/Table */}
+              {viewMode === "cards" || isMobile ? (
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+                  role="list"
+                  aria-label="Search results"
+                >
+                  {mockResults.map((result) => (
+                    <ResultCard
+                      key={result.id}
+                      result={result}
+                      onClick={() => handleResultClick(result)}
+                      onCopyId={() => copyAxId(result.axId)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <ResultsTable results={mockResults} onRowClick={handleResultClick} onCopyId={copyAxId} />
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {!isMobile && (
+          <Sheet open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
+            <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col" hideCloseButton>
+              {selectedResult && (
+                <>
+                  <div className="sticky top-0 z-10 bg-background border-b border-border/50 shrink-0">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <SheetTitle className="text-xl font-bold text-foreground leading-tight line-clamp-2">
+                            {selectedResult.name}
+                          </SheetTitle>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => copyAxId(selectedResult.axId)}
+                                className="inline-flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1 -mx-1"
+                                aria-label={`Copy ${selectedResult.axId}`}
+                              >
+                                {selectedResult.axId}
+                                <Copy className="h-3 w-3" aria-hidden="true" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start">
+                              Copy AX ID
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => setSelectedResult(null)}
+                              className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring -mt-0.5 -mr-1"
+                              aria-label="Close preview"
+                            >
+                              <X className="h-5 w-5" aria-hidden="true" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">Close</TooltipContent>
+                        </Tooltip>
                       </div>
-                      <div className="bg-muted/30 rounded-lg p-3">
-                        <div className="text-xs text-muted-foreground mb-1">Data Quality</div>
-                        <Badge variant="outline" className={getQualityColor(selectedResult.dataQuality)}>
-                          {selectedResult.dataQuality}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Countries */}
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-2">Countries</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedResult.countries.map((country) => (
-                          <Badge key={country} variant="secondary">
-                            {country}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Population */}
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-2">Population</h3>
-                      <p className="text-2xl font-bold text-foreground">{selectedResult.population.toLocaleString()}</p>
-                    </div>
-
-                    {/* Sources */}
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-2">Sources</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedResult.sources.map((source) => (
-                          <Badge key={source} variant="outline" className="bg-muted/50">
-                            {source}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Last Updated */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" aria-hidden="true" />
-                      Last updated {selectedResult.lastUpdated}
                     </div>
                   </div>
-                </ScrollArea>
 
-                {/* Footer CTA */}
-                <div className="p-4 md:p-6 border-t border-border/50 bg-card shrink-0 safe-area-bottom">
-                  <Button asChild className="w-full h-12 rounded-xl gap-2">
-                    <Link href={`/profile/${selectedResult.id}`}>
-                      Open full profile
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </div>
-              </>
-            )}
-          </SheetContent>
-        </Sheet>
-      </TooltipProvider>
-    </div>
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-6 space-y-6">
+                      {/* Key Stats */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <div className="text-xs text-muted-foreground mb-2">Engagement</div>
+                          <Badge variant="outline" className={getEngagementColor(selectedResult.engagementStatus)}>
+                            {selectedResult.engagementStatus}
+                          </Badge>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <div className="text-xs text-muted-foreground mb-2">Data Quality</div>
+                          <Badge variant="outline" className={getQualityColor(selectedResult.dataQuality)}>
+                            {selectedResult.dataQuality}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Countries */}
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-3">Countries</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedResult.countries.map((country) => (
+                            <Badge key={country} variant="secondary">
+                              {country}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Population */}
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-2">Population</h3>
+                        <p className="text-2xl font-bold text-foreground tabular-nums">
+                          {selectedResult.population.toLocaleString()}
+                        </p>
+                      </div>
+
+                      {/* Sources */}
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-3">Sources</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedResult.sources.map((source) => (
+                            <Badge key={source} variant="outline" className="bg-muted/50">
+                              {source}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Last Updated */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+                        <Clock className="h-4 w-4" aria-hidden="true" />
+                        Last updated {selectedResult.lastUpdated}
+                      </div>
+                    </div>
+                  </ScrollArea>
+
+                  <div className="sticky bottom-0 p-6 border-t border-border/50 bg-background shrink-0">
+                    <Button asChild className="w-full h-12 rounded-xl gap-2">
+                      <Link href={`/profile/${selectedResult.id}`}>
+                        Open full profile
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              )}
+            </SheetContent>
+          </Sheet>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }
 
@@ -823,71 +841,69 @@ function ResultsTable({
   onCopyId: (axId: string) => void
 }) {
   return (
-    <div className="px-4 md:px-6 pb-24 md:pb-6">
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead className="font-semibold min-w-[200px] sticky left-0 bg-muted/30">Name</TableHead>
-                <TableHead className="font-semibold min-w-[100px]">AX ID</TableHead>
-                <TableHead className="font-semibold min-w-[150px]">Countries</TableHead>
-                <TableHead className="font-semibold min-w-[140px]">Engagement</TableHead>
-                <TableHead className="font-semibold text-right min-w-[120px]">Population</TableHead>
-                <TableHead className="font-semibold min-w-[100px]">Updated</TableHead>
+    <div className="border border-border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table className="min-w-[800px]">
+          <TableHeader>
+            <TableRow className="bg-muted/30">
+              <TableHead className="font-semibold w-[220px] sticky left-0 bg-muted/30 z-10">Name</TableHead>
+              <TableHead className="font-semibold w-[100px]">AX ID</TableHead>
+              <TableHead className="font-semibold w-[160px]">Countries</TableHead>
+              <TableHead className="font-semibold w-[140px]">Engagement</TableHead>
+              <TableHead className="font-semibold w-[120px] text-right">Population</TableHead>
+              <TableHead className="font-semibold w-[100px]">Updated</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {results.map((result) => (
+              <TableRow key={result.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onRowClick(result)}>
+                <TableCell className="font-medium sticky left-0 bg-card z-10 w-[220px]">
+                  <span className="line-clamp-1">{result.name}</span>
+                </TableCell>
+                <TableCell className="w-[100px]">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onCopyId(result.axId)
+                        }}
+                        className="text-xs font-mono text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        aria-label={`Copy ${result.axId}`}
+                      >
+                        {result.axId}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Copy AX ID</TooltipContent>
+                  </Tooltip>
+                </TableCell>
+                <TableCell className="w-[160px]">
+                  <div className="flex flex-wrap gap-1">
+                    {result.countries.slice(0, 2).map((country) => (
+                      <Badge key={country} variant="secondary" className="text-xs px-1.5 py-0">
+                        {country}
+                      </Badge>
+                    ))}
+                    {result.countries.length > 2 && (
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                        +{result.countries.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="w-[140px]">
+                  <Badge variant="outline" className={getEngagementColor(result.engagementStatus)}>
+                    {result.engagementStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right tabular-nums w-[120px]">
+                  {result.population.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-muted-foreground w-[100px]">{result.lastUpdated}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {results.map((result) => (
-                <TableRow
-                  key={result.id}
-                  className="cursor-pointer hover:bg-muted/30"
-                  onClick={() => onRowClick(result)}
-                >
-                  <TableCell className="font-medium sticky left-0 bg-card">{result.name}</TableCell>
-                  <TableCell>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onCopyId(result.axId)
-                          }}
-                          className="text-xs font-mono text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                          aria-label={`Copy ${result.axId}`}
-                        >
-                          {result.axId}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Copy AX ID</TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {result.countries.slice(0, 2).map((country) => (
-                        <Badge key={country} variant="secondary" className="text-xs px-1.5 py-0">
-                          {country}
-                        </Badge>
-                      ))}
-                      {result.countries.length > 2 && (
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                          +{result.countries.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getEngagementColor(result.engagementStatus)}>
-                      {result.engagementStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{result.population.toLocaleString()}</TableCell>
-                  <TableCell className="text-muted-foreground">{result.lastUpdated}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
