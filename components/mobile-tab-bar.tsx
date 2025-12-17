@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { getEngagementColor, getChangeColor } from "@/lib/status-colors"
 
 type MobileTab = "explore" | "saved" | "watchlist" | "account"
 
@@ -147,21 +148,6 @@ export function MobileTabBar() {
 
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]))
-  }
-
-  const getEngagementColor = (status: string) => {
-    switch (status) {
-      case "Unreached":
-        return "bg-red-100 text-red-700 border-red-200"
-      case "Minimally Engaged":
-        return "bg-amber-100 text-amber-700 border-amber-200"
-      case "Superficially Engaged":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200"
-      case "Significantly Engaged":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200"
-      default:
-        return "bg-muted text-muted-foreground"
-    }
   }
 
   const tabs = [
@@ -352,19 +338,13 @@ export function MobileTabBar() {
                     {group.changes.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {group.changes.includes("engagement") && (
-                          <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
-                            Engagement changed
-                          </Badge>
+                          <Badge className={`text-xs ${getChangeColor("engagement")}`}>Engagement changed</Badge>
                         )}
                         {group.changes.includes("population") && (
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                            Population updated
-                          </Badge>
+                          <Badge className={`text-xs ${getChangeColor("population")}`}>Population updated</Badge>
                         )}
                         {group.changes.includes("updated") && (
-                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
-                            Data refreshed
-                          </Badge>
+                          <Badge className={`text-xs ${getChangeColor("updated")}`}>Data refreshed</Badge>
                         )}
                       </div>
                     )}

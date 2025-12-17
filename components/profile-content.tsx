@@ -40,6 +40,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { getEngagementColor, getQualityColor } from "@/lib/status-colors"
 
 // Mock data for the people group profile
 const peopleGroupData = {
@@ -140,37 +141,6 @@ const peopleGroupData = {
     },
     { field: "Evangelical %", value: "0.1%", source: "Joshua Project", date: "Dec 2024", confidence: "Medium" },
   ],
-}
-
-function getEngagementColor(status: string): string {
-  switch (status.toLowerCase()) {
-    case "unreached":
-      return "bg-rose-100 text-rose-700 border-rose-200"
-    case "minimally reached":
-    case "minimally engaged":
-      return "bg-amber-100 text-amber-700 border-amber-200"
-    case "engaged":
-    case "superficially engaged":
-      return "bg-yellow-100 text-yellow-700 border-yellow-200"
-    case "significantly engaged":
-    case "established":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
-}
-
-function getQualityColor(quality: string): string {
-  switch (quality.toLowerCase()) {
-    case "high":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200"
-    case "medium":
-      return "bg-amber-100 text-amber-700 border-amber-200"
-    case "low":
-      return "bg-rose-100 text-rose-700 border-rose-200"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
 }
 
 function getConfidenceIcon(confidence: string) {

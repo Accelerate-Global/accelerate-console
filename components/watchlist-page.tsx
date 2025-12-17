@@ -48,6 +48,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getEngagementColor } from "@/lib/status-colors"
 
 const collections = [
   { id: "all", name: "All Watched", count: 24, icon: Eye, color: "text-muted-foreground" },
@@ -249,21 +250,6 @@ export function WatchlistPage() {
       setSelectedGroups([])
     } else {
       setSelectedGroups(filteredGroups.map((g) => g.id))
-    }
-  }
-
-  const getEngagementColor = (status: string) => {
-    switch (status) {
-      case "Unreached":
-        return "bg-red-100 text-red-700 border-red-200"
-      case "Minimally Engaged":
-        return "bg-amber-100 text-amber-700 border-amber-200"
-      case "Superficially Engaged":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200"
-      case "Significantly Engaged":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200"
-      default:
-        return "bg-muted text-muted-foreground"
     }
   }
 

@@ -38,6 +38,63 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Semantic status tokens for light mode */
+  /* Engagement status colors */
+  --status-unreached-bg: oklch(0.95 0.05 15);
+  --status-unreached-text: oklch(0.45 0.15 20);
+  --status-unreached-border: oklch(0.88 0.08 15);
+
+  --status-minimally-bg: oklch(0.95 0.06 75);
+  --status-minimally-text: oklch(0.5 0.12 60);
+  --status-minimally-border: oklch(0.88 0.1 75);
+
+  --status-superficially-bg: oklch(0.96 0.08 95);
+  --status-superficially-text: oklch(0.52 0.12 85);
+  --status-superficially-border: oklch(0.9 0.1 95);
+
+  --status-significantly-bg: oklch(0.95 0.06 160);
+  --status-significantly-text: oklch(0.45 0.12 160);
+  --status-significantly-border: oklch(0.88 0.08 160);
+
+  --status-fully-bg: oklch(0.95 0.06 160);
+  --status-fully-text: oklch(0.45 0.12 160);
+  --status-fully-border: oklch(0.88 0.08 160);
+
+  /* Data quality colors */
+  --quality-high-bg: oklch(0.95 0.06 160);
+  --quality-high-text: oklch(0.45 0.12 160);
+  --quality-high-border: oklch(0.88 0.08 160);
+
+  --quality-medium-bg: oklch(0.95 0.06 75);
+  --quality-medium-text: oklch(0.5 0.12 60);
+  --quality-medium-border: oklch(0.88 0.1 75);
+
+  --quality-low-bg: oklch(0.95 0.05 15);
+  --quality-low-text: oklch(0.45 0.15 20);
+  --quality-low-border: oklch(0.88 0.08 15);
+
+  /* Change indicator colors */
+  --change-engagement-bg: oklch(0.95 0.06 250);
+  --change-engagement-text: oklch(0.45 0.12 250);
+  --change-engagement-border: oklch(0.88 0.08 250);
+
+  --change-population-bg: oklch(0.95 0.06 300);
+  --change-population-text: oklch(0.5 0.12 300);
+  --change-population-border: oklch(0.88 0.08 300);
+
+  --change-updated-bg: oklch(0.95 0.06 160);
+  --change-updated-text: oklch(0.45 0.12 160);
+  --change-updated-border: oklch(0.88 0.08 160);
+
+  /* Tag colors */
+  --tag-red: oklch(0.6 0.2 25);
+  --tag-orange: oklch(0.65 0.18 50);
+  --tag-amber: oklch(0.7 0.16 75);
+  --tag-emerald: oklch(0.6 0.15 160);
+  --tag-teal: oklch(0.6 0.12 195);
+  --tag-blue: oklch(0.55 0.18 250);
+  --tag-gray: oklch(0.55 0 0);
 }
 
 .dark {
@@ -52,13 +109,13 @@
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.96 0 0);
   --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.6 0 0);
+  --muted-foreground: oklch(0.65 0 0);
   --accent: oklch(0.65 0.12 195);
   --accent-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.26 0 0);
-  --input: oklch(0.26 0 0);
+  --border: oklch(0.28 0 0);
+  --input: oklch(0.28 0 0);
   --ring: oklch(0.65 0.12 195);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -73,6 +130,63 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Semantic status tokens for dark mode */
+  /* Engagement status colors - adjusted for dark mode contrast */
+  --status-unreached-bg: oklch(0.25 0.08 15);
+  --status-unreached-text: oklch(0.75 0.12 15);
+  --status-unreached-border: oklch(0.35 0.1 15);
+
+  --status-minimally-bg: oklch(0.28 0.08 75);
+  --status-minimally-text: oklch(0.78 0.12 75);
+  --status-minimally-border: oklch(0.38 0.1 75);
+
+  --status-superficially-bg: oklch(0.28 0.08 95);
+  --status-superficially-text: oklch(0.8 0.12 95);
+  --status-superficially-border: oklch(0.38 0.1 95);
+
+  --status-significantly-bg: oklch(0.25 0.08 160);
+  --status-significantly-text: oklch(0.75 0.12 160);
+  --status-significantly-border: oklch(0.35 0.1 160);
+
+  --status-fully-bg: oklch(0.25 0.08 160);
+  --status-fully-text: oklch(0.75 0.12 160);
+  --status-fully-border: oklch(0.35 0.1 160);
+
+  /* Data quality colors */
+  --quality-high-bg: oklch(0.25 0.08 160);
+  --quality-high-text: oklch(0.75 0.12 160);
+  --quality-high-border: oklch(0.35 0.1 160);
+
+  --quality-medium-bg: oklch(0.28 0.08 75);
+  --quality-medium-text: oklch(0.78 0.12 75);
+  --quality-medium-border: oklch(0.38 0.1 75);
+
+  --quality-low-bg: oklch(0.25 0.08 15);
+  --quality-low-text: oklch(0.75 0.12 15);
+  --quality-low-border: oklch(0.35 0.1 15);
+
+  /* Change indicator colors */
+  --change-engagement-bg: oklch(0.25 0.08 250);
+  --change-engagement-text: oklch(0.75 0.12 250);
+  --change-engagement-border: oklch(0.35 0.1 250);
+
+  --change-population-bg: oklch(0.25 0.08 300);
+  --change-population-text: oklch(0.75 0.12 300);
+  --change-population-border: oklch(0.35 0.1 300);
+
+  --change-updated-bg: oklch(0.25 0.08 160);
+  --change-updated-text: oklch(0.75 0.12 160);
+  --change-updated-border: oklch(0.35 0.1 160);
+
+  /* Tag colors - brighter for dark mode */
+  --tag-red: oklch(0.65 0.18 25);
+  --tag-orange: oklch(0.7 0.16 50);
+  --tag-amber: oklch(0.75 0.14 75);
+  --tag-emerald: oklch(0.65 0.14 160);
+  --tag-teal: oklch(0.65 0.12 195);
+  --tag-blue: oklch(0.6 0.16 250);
+  --tag-gray: oklch(0.6 0 0);
 }
 
 @theme inline {
@@ -141,4 +255,94 @@
 .tooltip-content {
   pointer-events: none;
   touch-action: none;
+}
+
+/* Status badge utility classes using semantic tokens */
+.status-unreached {
+  background-color: var(--status-unreached-bg);
+  color: var(--status-unreached-text);
+  border-color: var(--status-unreached-border);
+}
+
+.status-minimally {
+  background-color: var(--status-minimally-bg);
+  color: var(--status-minimally-text);
+  border-color: var(--status-minimally-border);
+}
+
+.status-superficially {
+  background-color: var(--status-superficially-bg);
+  color: var(--status-superficially-text);
+  border-color: var(--status-superficially-border);
+}
+
+.status-significantly {
+  background-color: var(--status-significantly-bg);
+  color: var(--status-significantly-text);
+  border-color: var(--status-significantly-border);
+}
+
+.status-fully {
+  background-color: var(--status-fully-bg);
+  color: var(--status-fully-text);
+  border-color: var(--status-fully-border);
+}
+
+.quality-high {
+  background-color: var(--quality-high-bg);
+  color: var(--quality-high-text);
+  border-color: var(--quality-high-border);
+}
+
+.quality-medium {
+  background-color: var(--quality-medium-bg);
+  color: var(--quality-medium-text);
+  border-color: var(--quality-medium-border);
+}
+
+.quality-low {
+  background-color: var(--quality-low-bg);
+  color: var(--quality-low-text);
+  border-color: var(--quality-low-border);
+}
+
+.change-engagement {
+  background-color: var(--change-engagement-bg);
+  color: var(--change-engagement-text);
+  border-color: var(--change-engagement-border);
+}
+
+.change-population {
+  background-color: var(--change-population-bg);
+  color: var(--change-population-text);
+  border-color: var(--change-population-border);
+}
+
+.change-updated {
+  background-color: var(--change-updated-bg);
+  color: var(--change-updated-text);
+  border-color: var(--change-updated-border);
+}
+
+/* Tag dot colors */
+.tag-dot-red {
+  background-color: var(--tag-red);
+}
+.tag-dot-orange {
+  background-color: var(--tag-orange);
+}
+.tag-dot-amber {
+  background-color: var(--tag-amber);
+}
+.tag-dot-emerald {
+  background-color: var(--tag-emerald);
+}
+.tag-dot-teal {
+  background-color: var(--tag-teal);
+}
+.tag-dot-blue {
+  background-color: var(--tag-blue);
+}
+.tag-dot-gray {
+  background-color: var(--tag-gray);
 }

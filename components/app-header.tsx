@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Search, Sparkles, Bookmark, Eye, Bell, Settings, LogOut, X } from "lucide-react"
+import { Search, Sparkles, Bookmark, Eye, Bell, Settings, LogOut, X, Sun, Moon, Monitor, Check } from "lucide-react"
+import { useTheme } from "next-themes"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -12,6 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 
@@ -23,6 +28,12 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const searchInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Focus search on Cmd+K
   useEffect(() => {
@@ -43,7 +54,7 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
   }
 
   return (
-    <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <TooltipProvider>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           {/* Logo - Left */}
@@ -51,7 +62,7 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
             <TooltipTrigger asChild>
               <button
                 onClick={handleLogoClick}
-                className="flex items-center gap-2 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex items-center gap-2 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-label="Go to Explore"
               >
                 <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -106,7 +117,7 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="shrink-0 rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="shrink-0 rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label="Account menu"
                   >
                     <Avatar className="h-8 w-8">
@@ -139,6 +150,49 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                  {mounted && theme === "dark" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : mounted && theme === "light" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Monitor className="h-4 w-4" />
+                  )}
+                  Theme
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() => setTheme("light")}
+                      className="gap-2 cursor-pointer"
+                      aria-label="Switch to light theme"
+                    >
+                      <Sun className="h-4 w-4" />
+                      Light
+                      {mounted && theme === "light" && <Check className="h-4 w-4 ml-auto" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setTheme("dark")}
+                      className="gap-2 cursor-pointer"
+                      aria-label="Switch to dark theme"
+                    >
+                      <Moon className="h-4 w-4" />
+                      Dark
+                      {mounted && theme === "dark" && <Check className="h-4 w-4 ml-auto" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setTheme("system")}
+                      className="gap-2 cursor-pointer"
+                      aria-label="Use system theme preference"
+                    >
+                      <Monitor className="h-4 w-4" />
+                      System
+                      {mounted && theme === "system" && <Check className="h-4 w-4 ml-auto" />}
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuItem asChild>
                 <Link href="/settings/notifications" className="gap-2 cursor-pointer">
                   <Bell className="h-4 w-4" />

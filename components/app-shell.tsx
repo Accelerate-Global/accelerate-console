@@ -1,35 +1,28 @@
 "use client"
 
 import type React from "react"
-import { Footer } from "@/components/footer"
-
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import {
   Search,
-  Sparkles,
-  Compass,
-  Bookmark,
-  Eye,
-  User,
-  X,
-  Bell,
-  Settings,
-  LogOut,
-  ChevronRight,
-  Clock,
   Globe,
   Users,
   Languages,
   Database,
   BookOpen,
-  AlertCircle,
+  Clock,
+  ChevronRight,
+  Sparkles,
+  Bookmark,
+  Eye,
+  Bell,
+  Settings,
+  LogOut,
+  X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -38,10 +31,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-
-type MobileTab = "explore" | "saved" | "watchlist" | "account"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { getEngagementColor } from "@/lib/status-colors"
 
 // Filter chips data
 const filterChips = [
@@ -86,14 +77,6 @@ const savedViews = [
     tags: ["Engagement"],
     lastRun: "3 days ago",
     resultCount: 1289,
-  },
-  {
-    id: 4,
-    name: "Frontier Peoples Priority",
-    description: "No known believers, limited access",
-    tags: ["Frontier"],
-    lastRun: "Last week",
-    resultCount: 312,
   },
 ]
 
@@ -142,24 +125,13 @@ const watchedGroups = [
   },
 ]
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [activeTab, setActiveTab] = useState<MobileTab | null>(null)
-  const [activeFilters, setActiveFilters] = useState<string[]>([])
-  const searchInputRef = useRef<HTMLInputElement>(null)
+interface AppShellProps {
+  children: React.ReactNode
+}
 
-  // Close sheet when pressing escape
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setActiveTab(null)
-        setSearchFocused(false)
-      }
-    }
-    window.addEventListener("keydown", handleEscape)
-    return () => window.removeEventListener("keydown", handleEscape)
-  }, [])
+export function AppShell({ children }: AppShellProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Focus search on Cmd+K
   useEffect(() => {
@@ -173,470 +145,315 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Desktop Header */}
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+        <TooltipProvider>
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+            {/* Logo - Left */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label="Go to Explore"
+                >
+                  <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                  <span className="font-semibold text-foreground hidden sm:inline">PeopleGroups</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent className="tooltip-content">
+                <p>Go to Explore</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Centered Omnibox Search */}
+            <div className="flex-1 max-w-2xl mx-auto">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search by name, alias, country, language, or AX ID"
+                  className="w-full h-10 pl-10 pr-16 text-sm rounded-full border-border bg-secondary/50 focus:bg-card focus:shadow-md focus:border-ring transition-all"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search people groups"
+                />
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-mono">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+                {searchQuery && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-12 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+                        aria-label="Clear search"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear search</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+
+            {/* Avatar Menu - Right */}
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="shrink-0 rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      aria-label="Account menu"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="/diverse-user-avatars.png" alt="User" />
+                        <AvatarFallback className="bg-accent text-accent-foreground text-xs">JD</AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Account menu</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-foreground">John Doe</p>
+                  <p className="text-xs text-muted-foreground">john@example.com</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/saved-views" className="gap-2 cursor-pointer">
+                    <Bookmark className="h-4 w-4" />
+                    Saved Views
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/watchlist" className="gap-2 cursor-pointer">
+                    <Eye className="h-4 w-4" />
+                    Watchlist
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/notifications" className="gap-2 cursor-pointer">
+                    <Bell className="h-4 w-4" />
+                    Notifications
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive cursor-pointer">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TooltipProvider>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1">{children}</main>
+    </div>
+  )
+}
+
+// Explore Content Component
+export function ExploreContent() {
+  const [activeFilters, setActiveFilters] = useState<string[]>([])
+
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]))
   }
 
-  const resetState = () => {
-    setSearchQuery("")
-    setActiveFilters([])
-    setActiveTab(null)
-  }
-
-  const getEngagementColor = (status: string) => {
-    switch (status) {
-      case "Unreached":
-        return "bg-red-100 text-red-700 border-red-200"
-      case "Minimally Engaged":
-        return "bg-amber-100 text-amber-700 border-amber-200"
-      case "Superficially Engaged":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200"
-      case "Significantly Engaged":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200"
-      default:
-        return "bg-muted text-muted-foreground"
-    }
-  }
-
-  const tabs = [
-    { id: "explore" as MobileTab, label: "Explore", icon: Compass },
-    { id: "saved" as MobileTab, label: "Saved", icon: Bookmark },
-    { id: "watchlist" as MobileTab, label: "Watchlist", icon: Eye },
-    { id: "account" as MobileTab, label: "Account", icon: User },
-  ]
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Desktop Top Bar */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          {/* Logo - Left */}
-          <button onClick={resetState} className="flex items-center gap-2 shrink-0">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-foreground hidden sm:inline">PeopleGroups</span>
-          </button>
-
-          {/* Centered Omnibox Search */}
-          <div className="flex-1 max-w-2xl mx-auto">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-              <Input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search by name, alias, country, language, or AX ID"
-                className="w-full h-10 pl-10 pr-16 text-sm rounded-full border-border bg-secondary/50 focus:bg-card focus:shadow-md focus:border-ring transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-mono">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-12 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
-                >
-                  <X className="h-3 w-3 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Avatar Menu - Right */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="shrink-0 rounded-full ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/diverse-user-avatars.png" alt="User" />
-                  <AvatarFallback className="bg-accent text-accent-foreground text-xs">JD</AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="px-3 py-2">
-                <p className="text-sm font-medium text-foreground">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@example.com</p>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/saved-views" className="gap-2 cursor-pointer">
-                  <Bookmark className="h-4 w-4" />
-                  Saved Views
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/watchlist" className="gap-2 cursor-pointer">
-                  <Eye className="h-4 w-4" />
-                  Watchlist
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/settings/notifications" className="gap-2 cursor-pointer">
-                  <Bell className="h-4 w-4" />
-                  Notifications
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive cursor-pointer">
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
-
-      <div className="hidden md:block">
-        <Footer />
+    <div className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+      {/* Hero Section */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight mb-4 text-balance">
+          Explore People Groups
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
+          Discover detailed information on over 17,000 people groups worldwide
+        </p>
       </div>
 
-      {/* Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/50 z-50 safe-area-bottom">
-        <div className="flex items-center justify-around px-2 py-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
+      {/* Large Search */}
+      <div className="max-w-2xl mx-auto mb-10">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search by name, alias, country, language, or AX ID"
+            className="w-full h-14 pl-12 pr-4 text-base rounded-2xl border-border bg-card shadow-sm focus:shadow-md focus:border-ring transition-all"
+            aria-label="Search people groups"
+          />
+        </div>
+      </div>
+
+      {/* Popular Filters */}
+      <div className="mb-12">
+        <p className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wide text-center">
+          Popular filters
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {filterChips.map((chip) => {
+            const Icon = chip.icon
+            const isActive = activeFilters.includes(chip.label)
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(isActive ? null : tab.id)}
-                className={`flex flex-col items-center justify-center py-2 px-4 min-w-[64px] min-h-[52px] rounded-lg transition-colors ${
-                  isActive ? "text-accent" : "text-muted-foreground"
+                key={chip.label}
+                onClick={() => toggleFilter(chip.label)}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
-                <Icon className={`h-5 w-5 mb-1 ${isActive ? "stroke-[2.5]" : ""}`} />
-                <span className={`text-[10px] ${isActive ? "font-semibold" : "font-medium"}`}>{tab.label}</span>
+                <Icon className="h-4 w-4" />
+                {chip.label}
+                <span className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                  {chip.count}
+                </span>
               </button>
             )
           })}
         </div>
-      </nav>
+      </div>
 
-      {/* Explore Sheet */}
-      <Sheet open={activeTab === "explore"} onOpenChange={(open) => !open && setActiveTab(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-lg">Explore</SheetTitle>
-                <button
-                  onClick={() => setActiveTab(null)}
-                  className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              {/* Mobile Search */}
-              <div className="relative mt-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search people groups..."
-                  className="w-full h-11 pl-10 pr-4 rounded-xl"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {/* Filter Chips */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">
-                  Popular filters
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {filterChips.map((chip) => {
-                    const Icon = chip.icon
-                    const isActive = activeFilters.includes(chip.label)
-                    return (
-                      <button
-                        key={chip.label}
-                        onClick={() => toggleFilter(chip.label)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all min-h-[36px] ${
-                          isActive ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                        {chip.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Recent Searches */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</h3>
-                </div>
-                <Card className="divide-y divide-border border-border/50">
-                  {recentSearches.map((search, idx) => (
-                    <button
-                      key={idx}
-                      className="w-full flex items-center justify-between px-3 py-3 hover:bg-muted/50 transition-colors text-left min-h-[48px]"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{search.query}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{search.timestamp}</span>
-                    </button>
-                  ))}
-                </Card>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="p-3 text-center border-border/50">
-                  <p className="text-xl font-bold text-foreground">17,446</p>
-                  <p className="text-xs text-muted-foreground">People Groups</p>
-                </Card>
-                <Card className="p-3 text-center border-border/50">
-                  <p className="text-xl font-bold text-foreground">234</p>
-                  <p className="text-xs text-muted-foreground">Countries</p>
-                </Card>
-              </div>
+      {/* Two Column Cards */}
+      <div className="grid md:grid-cols-2 gap-6 mb-16">
+        {/* Recent Searches */}
+        <Card className="border-border/50">
+          <div className="px-5 py-4 border-b border-border/50 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Recent Searches</h2>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Saved Views Sheet */}
-      <Sheet open={activeTab === "saved"} onOpenChange={(open) => !open && setActiveTab(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <SheetHeader className="px-4 pt-4 pb-3 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-lg">Saved Views</SheetTitle>
-                <button
-                  onClick={() => setActiveTab(null)}
-                  className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-sm text-muted-foreground">{savedViews.length} saved views</p>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {savedViews.map((view) => (
-                <Card key={view.id} className="p-4 border-border/50">
-                  <Link href={`/search?view=${view.id}`} className="block" onClick={() => setActiveTab(null)}>
-                    <h3 className="font-semibold text-foreground mb-1">{view.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{view.description}</p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {view.lastRun}
-                      </span>
-                      <span>{view.resultCount.toLocaleString()} results</span>
-                    </div>
-                  </Link>
-                </Card>
-              ))}
-              <Button variant="outline" className="w-full mt-2 bg-transparent" asChild>
-                <Link href="/saved-views" onClick={() => setActiveTab(null)}>
-                  View All Saved Views
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Watchlist Sheet */}
-      <Sheet open={activeTab === "watchlist"} onOpenChange={(open) => !open && setActiveTab(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <SheetHeader className="px-4 pt-4 pb-3 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-lg">Watchlist</SheetTitle>
-                <button
-                  onClick={() => setActiveTab(null)}
-                  className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {watchedGroups.length} groups · {watchedGroups.filter((g) => g.changes.length > 0).length} with changes
-              </p>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {watchedGroups.map((group) => (
-                <Card
-                  key={group.id}
-                  className={`p-4 border-border/50 ${group.changes.length > 0 ? "border-l-4 border-l-accent" : ""}`}
-                >
-                  <Link href={`/profile/${group.id}`} className="block" onClick={() => setActiveTab(null)}>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{group.name}</h3>
-                        <span className="text-xs text-muted-foreground font-mono">{group.axId}</span>
-                      </div>
-                      <Badge variant="outline" className={`text-xs ${getEngagementColor(group.engagementStatus)}`}>
-                        {group.engagementStatus}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {group.countries.map((country) => (
-                        <Badge key={country} variant="secondary" className="text-xs font-normal">
-                          {country}
-                        </Badge>
-                      ))}
-                    </div>
-                    {group.changes.length > 0 && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
-                        <AlertCircle className="h-3.5 w-3.5 text-accent" />
-                        <span className="text-xs text-muted-foreground">
-                          {group.changes.includes("population") && group.populationChange && (
-                            <span className="text-emerald-600">+{group.populationChange.toLocaleString()} pop</span>
-                          )}
-                          {group.changes.includes("engagement") && <span>Engagement changed</span>}
-                          {group.changes.includes("updated") && <span>Data updated {group.lastUpdated}</span>}
-                        </span>
-                      </div>
-                    )}
-                  </Link>
-                </Card>
-              ))}
-              <Button variant="outline" className="w-full mt-2 bg-transparent" asChild>
-                <Link href="/watchlist" onClick={() => setActiveTab(null)}>
-                  View Full Watchlist
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Account Sheet */}
-      <Sheet open={activeTab === "account"} onOpenChange={(open) => !open && setActiveTab(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <SheetHeader className="px-4 pt-4 pb-4 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-lg">Account</SheetTitle>
-                <button
-                  onClick={() => setActiveTab(null)}
-                  className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              {/* Profile Summary */}
-              <div className="flex items-center gap-3 mt-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="/diverse-user-avatars.png" alt="User" />
-                  <AvatarFallback className="bg-accent text-accent-foreground">JD</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-foreground">John Doe</p>
-                  <p className="text-sm text-muted-foreground">john@example.com</p>
+          <div className="divide-y divide-border/50">
+            {recentSearches.map((search, idx) => (
+              <button
+                key={idx}
+                className="w-full flex items-center justify-between px-5 py-3 hover:bg-muted/50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground">{search.query}</span>
                 </div>
-              </div>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="p-3 border-border/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Bookmark className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Saved Views</span>
-                  </div>
-                  <p className="text-xl font-bold text-foreground">{savedViews.length}</p>
-                </Card>
-                <Card className="p-3 border-border/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Watching</span>
-                  </div>
-                  <p className="text-xl font-bold text-foreground">{watchedGroups.length}</p>
-                </Card>
-              </div>
-
-              {/* Notification Settings Preview */}
-              <Card className="p-4 border-border/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-foreground">Notifications</span>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">Daily digest at 9:00 AM</p>
-                <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
-                  <Link href="/settings/notifications" onClick={() => setActiveTab(null)}>
-                    Notification Settings
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </Card>
-
-              {/* Menu Items */}
-              <div className="space-y-1">
-                <Link
-                  href="/saved-views"
-                  onClick={() => setActiveTab(null)}
-                  className="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-muted transition-colors min-h-[48px]"
-                >
-                  <div className="flex items-center gap-3">
-                    <Bookmark className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-foreground">Saved Views</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-                <Link
-                  href="/watchlist"
-                  onClick={() => setActiveTab(null)}
-                  className="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-muted transition-colors min-h-[48px]"
-                >
-                  <div className="flex items-center gap-3">
-                    <Eye className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-foreground">Watchlist</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-                <Link
-                  href="/settings"
-                  onClick={() => setActiveTab(null)}
-                  className="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-muted transition-colors min-h-[48px]"
-                >
-                  <div className="flex items-center gap-3">
-                    <Settings className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-foreground">Settings</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              </div>
-
-              <Separator />
-
-              {/* Sign Out */}
-              <button className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted transition-colors w-full text-left min-h-[48px] text-destructive">
-                <LogOut className="h-5 w-5" />
-                <span>Sign Out</span>
+                <span className="text-xs text-muted-foreground">{search.timestamp}</span>
               </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Saved Views */}
+        <Card className="border-border/50">
+          <div className="px-5 py-4 border-b border-border/50 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Bookmark className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Saved Views</h2>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+          <div className="divide-y divide-border/50">
+            {savedViews.map((view) => (
+              <Link
+                key={view.id}
+                href={`/search?view=${view.id}`}
+                className="flex items-center justify-between px-5 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{view.name}</p>
+                  <p className="text-xs text-muted-foreground">{view.resultCount.toLocaleString()} results</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* Story Numbers Strip */}
+      <div className="border-t border-border/50 pt-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="text-center">
+            <p className="text-3xl md:text-4xl font-bold text-foreground">17,446</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">People Groups</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl md:text-4xl font-bold text-foreground">234</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Countries</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl md:text-4xl font-bold text-foreground">7,879</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Languages</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl md:text-4xl font-bold text-foreground">8.1B</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Population</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Watchlist Content Component
+export function WatchlistContent() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-foreground">Watchlist</h1>
+        <Badge variant="secondary" className="text-xs">
+          {watchedGroups.filter((g) => g.changes.length > 0).length} with changes
+        </Badge>
+      </div>
+      <div className="space-y-3">
+        {watchedGroups.map((group) => (
+          <Card
+            key={group.id}
+            className={`p-4 border-border/50 ${group.changes.length > 0 ? "border-l-4 border-l-accent" : ""}`}
+          >
+            <Link href={`/profile/${group.id}`} className="block">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-foreground truncate">{group.name}</h3>
+                  <span className="text-xs text-muted-foreground font-mono">{group.axId}</span>
+                </div>
+                <Badge variant="outline" className={`text-xs shrink-0 ${getEngagementColor(group.engagementStatus)}`}>
+                  {group.engagementStatus}
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {group.countries.map((country) => (
+                  <Badge key={country} variant="secondary" className="text-xs font-normal">
+                    {country}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{group.population.toLocaleString()} people</span>
+                <span>Updated {group.lastUpdated}</span>
+              </div>
+            </Link>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { X, Copy, ExternalLink } from "lucide-react"
+import { getEngagementColor } from "@/lib/status-colors"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -221,19 +222,6 @@ const savedFolders = [
   { id: "priority", label: "Priority Lists", color: "bg-amber-500" },
   { id: "regional", label: "Regional Focus", color: "bg-emerald-500" },
 ]
-
-const getEngagementColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "unreached":
-      return "bg-rose-100 text-rose-700 border-rose-200"
-    case "minimally reached":
-      return "bg-amber-100 text-amber-700 border-amber-200"
-    case "engaged":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
-}
 
 const formatPopulation = (num: number) => {
   if (num >= 1000000000) return (num / 1000000000).toFixed(1) + "B"
