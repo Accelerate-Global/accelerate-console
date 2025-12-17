@@ -2,58 +2,62 @@
 
 import type React from "react"
 import { useState } from "react"
-import Link from "next/link"
-import { Mail, CheckCircle2, AlertCircle, Twitter, Github, Linkedin } from "lucide-react"
+import { Mail, Twitter, Github, Linkedin } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { TooltipLink } from "@/components/icon-button"
+import { TooltipWrapper } from "@/components/icon-button"
+import { useToast } from "@/hooks/use-toast"
+
+function PlaceholderLink({ children }: { children: React.ReactNode }) {
+  return (
+    <TooltipWrapper tooltip="Coming soon">
+      <button
+        type="button"
+        aria-disabled="true"
+        className="text-sm text-muted-foreground hover:text-muted-foreground/80 cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+      >
+        {children}
+      </button>
+    </TooltipWrapper>
+  )
+}
+
+function PlaceholderSocialIcon({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <TooltipWrapper tooltip="Coming soon">
+      <button
+        type="button"
+        aria-disabled="true"
+        aria-label={`${label} (Coming soon)`}
+        className="h-8 w-8 rounded-full bg-secondary/70 flex items-center justify-center text-muted-foreground hover:text-muted-foreground/80 cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </button>
+    </TooltipWrapper>
+  )
+}
 
 export function AppFooter() {
   const [email, setEmail] = useState("")
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-  const [errorMessage, setErrorMessage] = useState("")
+  const { toast } = useToast()
 
-  const handleSubscribe = async (e: React.FormEvent) => {
+  const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email) return
-
-    setStatus("loading")
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Simulate success/error (90% success rate for demo)
-    if (Math.random() > 0.1) {
-      setStatus("success")
-      setEmail("")
-    } else {
-      setStatus("error")
-      setErrorMessage("Unable to subscribe. Please try again.")
-    }
+    toast({
+      title: "Subscriptions not enabled yet",
+      description: "This feature is coming soon.",
+    })
   }
 
-  const resourceLinks = [
-    { label: "Methodology", href: "/methodology" },
-    { label: "Data Sources", href: "/data-sources" },
-    { label: "Changelog", href: "/changelog" },
-  ]
+  const resourceLinks = ["Methodology", "Data Sources", "Changelog"]
+  const legalLinks = ["Privacy", "Terms", "Accessibility"]
+  const supportLinks = ["Contact", "Support", "Feedback"]
 
-  const legalLinks = [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-    { label: "Accessibility", href: "/accessibility" },
-  ]
-
-  const supportLinks = [
-    { label: "Contact", href: "/contact" },
-    { label: "Support", href: "/support" },
-    { label: "Feedback", href: "/feedback" },
-  ]
-
-  const socialLinks = [
-    { icon: Twitter, href: "https://twitter.com", label: "Follow us on Twitter" },
-    { icon: Github, href: "https://github.com", label: "View source on GitHub" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "Connect on LinkedIn" },
+  const socialIcons = [
+    { icon: Twitter, label: "Twitter" },
+    { icon: Github, label: "GitHub" },
+    { icon: Linkedin, label: "LinkedIn" },
   ]
 
   return (
@@ -73,20 +77,15 @@ export function AppFooter() {
             </p>
           </div>
 
-          {/* Links Columns */}
+          {/* Links Columns - Using PlaceholderLink instead of Link */}
           <div className="md:col-span-5 grid grid-cols-3 gap-6">
             {/* Resources */}
             <div>
               <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Resources</h4>
               <ul className="space-y-2.5">
-                {resourceLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                    >
-                      {link.label}
-                    </Link>
+                {resourceLinks.map((label) => (
+                  <li key={label}>
+                    <PlaceholderLink>{label}</PlaceholderLink>
                   </li>
                 ))}
               </ul>
@@ -96,14 +95,9 @@ export function AppFooter() {
             <div>
               <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Legal</h4>
               <ul className="space-y-2.5">
-                {legalLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                    >
-                      {link.label}
-                    </Link>
+                {legalLinks.map((label) => (
+                  <li key={label}>
+                    <PlaceholderLink>{label}</PlaceholderLink>
                   </li>
                 ))}
               </ul>
@@ -113,14 +107,9 @@ export function AppFooter() {
             <div>
               <h4 className="text-xs font-medium text-foreground uppercase tracking-wider mb-4">Support</h4>
               <ul className="space-y-2.5">
-                {supportLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                    >
-                      {link.label}
-                    </Link>
+                {supportLinks.map((label) => (
+                  <li key={label}>
+                    <PlaceholderLink>{label}</PlaceholderLink>
                   </li>
                 ))}
               </ul>
@@ -136,76 +125,49 @@ export function AppFooter() {
               </div>
               <p className="text-xs text-muted-foreground mb-4">Get notified when datasets refresh.</p>
 
-              {status === "success" ? (
-                <div className="flex items-center gap-2 py-2" role="status" aria-live="polite">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
-                  <span className="text-sm text-green-600">You&apos;re subscribed! We&apos;ll be in touch.</span>
+              <form onSubmit={handleSubscribe} className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 h-9 text-sm bg-card border-border"
+                    required
+                    aria-label="Email address for data updates"
+                    aria-describedby="email-consent"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+                  >
+                    Subscribe
+                  </Button>
                 </div>
-              ) : (
-                <form onSubmit={handleSubscribe} className="space-y-3">
-                  <div className="flex gap-2">
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value)
-                        if (status === "error") setStatus("idle")
-                      }}
-                      className="flex-1 h-9 text-sm bg-card border-border"
-                      required
-                      aria-label="Email address for data updates"
-                      aria-describedby="email-consent"
-                    />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
-                      disabled={status === "loading"}
-                    >
-                      {status === "loading" ? "..." : "Subscribe"}
-                    </Button>
-                  </div>
-                  <p id="email-consent" className="text-[10px] text-muted-foreground/70">
-                    By subscribing, you agree to our{" "}
-                    <Link href="/privacy" className="underline hover:text-foreground">
+                <p id="email-consent" className="text-[10px] text-muted-foreground/70">
+                  By subscribing, you agree to our{" "}
+                  <TooltipWrapper tooltip="Coming soon">
+                    <button type="button" aria-disabled="true" className="underline cursor-not-allowed">
                       Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                  {status === "error" && (
-                    <div className="flex items-center gap-1.5" role="alert">
-                      <AlertCircle className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />
-                      <span className="text-xs text-destructive">{errorMessage}</span>
-                    </div>
-                  )}
-                </form>
-              )}
+                    </button>
+                  </TooltipWrapper>
+                  .
+                </p>
+              </form>
             </div>
           </div>
         </div>
 
-        {/* Bottom Row */}
+        {/* Bottom Row - Using PlaceholderSocialIcon */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Accelerate Global. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
-            {socialLinks.map((social) => {
-              const Icon = social.icon
-              return (
-                <TooltipLink
-                  key={social.label}
-                  href={social.href}
-                  tooltip={social.label}
-                  external
-                  className="h-8 w-8 rounded-full bg-secondary/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{social.label}</span>
-                </TooltipLink>
-              )
-            })}
+            {socialIcons.map((social) => (
+              <PlaceholderSocialIcon key={social.label} icon={social.icon} label={social.label} />
+            ))}
           </div>
         </div>
       </div>

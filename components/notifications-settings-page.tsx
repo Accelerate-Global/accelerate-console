@@ -1,541 +1,756 @@
 "use client"
 
-import { TooltipProvider } from "@/components/ui/tooltip"
+import { Checkbox } from "@/components/ui/checkbox"
 
-import { useState } from "react"
-import { Bell, Mail, Users, TrendingUp, Database, Calendar, ChevronDown, Info } from "lucide-react"
+import { RadioGroupItem } from "@/components/ui/radio-group"
+
+import { RadioGroup } from "@/components/ui/radio-group"
+
+import { useState, useCallback } from "react"
+import { Bell, Mail, Smartphone, Users, TrendingUp, Database, RefreshCw, Clock, Settings2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Collapsible } from "@/components/ui/collapsible"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
+import { useToast } from "@/hooks/use-toast"
 import { AppLayout } from "@/components/app-layout"
 
-const changeTypes = [
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ChangeTypeConfig {
+  id: string
+  label: string
+  description: string
+  icon: typeof TrendingUp
+}
+
+interface WatchlistItem {
+  id: string
+  name: string
+  itemCount: number
+  hasOverride: boolean
+}
+
+interface WatchlistOverrideSettings {
+  frequency: string
+  changeTypes: string[]
+}
+
+interface NotificationSettings {
+  enabled: boolean
+  emailEnabled: boolean
+  changeTypes: Record<string, boolean>
+  populationThreshold: string
+  frequency: string
+  deliveryTime: string
+  deliveryDay: string
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CHANGE_TYPES: ChangeTypeConfig[] = [
   {
     id: "engagement",
-    name: "Engagement Status Changes",
-    description: "Get notified when a people group's engagement status changes (e.g., Unreached to Engaged)",
+    label: "Engagement status changes",
+    description: "When a people group's engagement status changes",
     icon: TrendingUp,
-    defaultEnabled: true,
   },
   {
     id: "population",
-    name: "Population Threshold Changes",
-    description: "Get notified when population estimates change by more than your set threshold",
+    label: "Population threshold changes",
+    description: "When population estimates change beyond your threshold",
     icon: Users,
-    defaultEnabled: true,
-    hasThreshold: true,
   },
   {
     id: "dataQuality",
-    name: "Data Quality Changes",
-    description: "Get notified when data quality ratings improve or decline",
+    label: "Data quality changes",
+    description: "When data quality ratings improve or decline",
     icon: Database,
-    defaultEnabled: false,
   },
   {
-    id: "lastUpdated",
-    name: "Record Updates",
-    description: "Get notified when any field on a watched people group is updated",
-    icon: Calendar,
-    defaultEnabled: false,
+    id: "recordUpdates",
+    label: "Record updates",
+    description: "When any field on a watched people group is updated",
+    icon: RefreshCw,
   },
 ]
 
-const frequencyOptions = [
-  {
-    id: "immediate",
-    name: "Immediate",
-    description: "Receive notifications as changes happen",
-    icon: Bell,
-  },
-  {
-    id: "daily",
-    name: "Daily Digest",
-    description: "One email per day summarizing all changes",
-    icon: Calendar,
-  },
-  {
-    id: "weekly",
-    name: "Weekly Digest",
-    description: "One email per week summarizing all changes",
-    icon: Calendar,
-  },
+const WATCHLISTS: WatchlistItem[] = [
+  { id: "1", name: "South Asia Priority", itemCount: 156, hasOverride: false },
+  { id: "2", name: "Unreached Frontier Peoples", itemCount: 312, hasOverride: true },
+  { id: "3", name: "Southeast Asia Watch", itemCount: 89, hasOverride: false },
+  { id: "4", name: "Arabic Speaking Groups", itemCount: 234, hasOverride: true },
+  { id: "5", name: "High Priority Research", itemCount: 45, hasOverride: false },
 ]
 
-const watchlists = [
-  {
-    id: "1",
-    name: "South Asia Priority",
-    itemCount: 156,
-    overrideEnabled: false,
-    overrideSettings: null,
-  },
-  {
-    id: "2",
-    name: "Unreached Frontier Peoples",
-    itemCount: 312,
-    overrideEnabled: true,
-    overrideSettings: {
-      frequency: "immediate",
-      changeTypes: ["engagement", "population"],
-    },
-  },
-  {
-    id: "3",
-    name: "Southeast Asia Watch",
-    itemCount: 89,
-    overrideEnabled: false,
-    overrideSettings: null,
-  },
-  {
-    id: "4",
-    name: "Arabic Speaking Groups",
-    itemCount: 234,
-    overrideEnabled: true,
-    overrideSettings: {
-      frequency: "weekly",
-      changeTypes: ["engagement"],
-    },
-  },
-  {
-    id: "5",
-    name: "High Priority Research",
-    itemCount: 45,
-    overrideEnabled: false,
-    overrideSettings: null,
-  },
-]
-
-export function NotificationsSettingsPage() {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-  const [emailEnabled, setEmailEnabled] = useState(true)
-  const [frequency, setFrequency] = useState("daily")
-  const [changeTypeSettings, setChangeTypeSettings] = useState<Record<string, boolean>>({
+const DEFAULT_SETTINGS: NotificationSettings = {
+  enabled: true,
+  emailEnabled: true,
+  changeTypes: {
     engagement: true,
     population: true,
     dataQuality: false,
-    lastUpdated: false,
-  })
-  const [populationThreshold, setPopulationThreshold] = useState("10")
-  const [watchlistOverrides, setWatchlistOverrides] = useState<Record<string, boolean>>({
-    "2": true,
-    "4": true,
-  })
-  const [saved, setSaved] = useState(false)
+    recordUpdates: false,
+  },
+  populationThreshold: "10",
+  frequency: "daily",
+  deliveryTime: "09:00",
+  deliveryDay: "monday",
+}
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+// ─────────────────────────────────────────────────────────────────────────────
+// Sticky Save Bar Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function StickySaveBar({
+  isDirty,
+  onSave,
+  onCancel,
+}: {
+  isDirty: boolean
+  onSave: () => void
+  onCancel: () => void
+}) {
+  if (!isDirty) return null
+
+  return (
+    <>
+      {/* Desktop: bottom sticky bar */}
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">You have unsaved changes</p>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={onCancel} className="min-h-[44px]">
+              Cancel
+            </Button>
+            <Button onClick={onSave} className="min-h-[44px]">
+              Save changes
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile: top sticky bar */}
+      <div className="md:hidden fixed top-14 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-md">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Unsaved changes</p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={onCancel} className="min-h-[44px]">
+              Cancel
+            </Button>
+            <Button size="sm" onClick={onSave} className="min-h-[44px]">
+              Save
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Watchlist Override Sheet Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WatchlistOverrideSheet({
+  watchlist,
+  open,
+  onOpenChange,
+}: {
+  watchlist: WatchlistItem | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { toast } = useToast()
+  const [overrideFrequency, setOverrideFrequency] = useState("daily")
+  const [overrideChangeTypes, setOverrideChangeTypes] = useState<Record<string, boolean>>({
+    engagement: true,
+    population: true,
+    dataQuality: false,
+    recordUpdates: false,
+  })
+
+  const handleSaveOverride = () => {
+    toast({
+      title: "Override saved (placeholder)",
+      description: `Custom settings for "${watchlist?.name}" have been saved.`,
+    })
+    onOpenChange(false)
+  }
+
+  const toggleOverrideChangeType = (id: string) => {
+    setOverrideChangeTypes((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  if (!watchlist) return null
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-md flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="text-left">Customize: {watchlist.name}</SheetTitle>
+          <p className="text-sm text-muted-foreground text-left">{watchlist.itemCount} people groups</p>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto py-6 space-y-6">
+          {/* Override Frequency */}
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Notification Frequency</Label>
+            <RadioGroup value={overrideFrequency} onValueChange={setOverrideFrequency} className="space-y-2">
+              <label
+                htmlFor="override-immediate"
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  overrideFrequency === "immediate" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <RadioGroupItem value="immediate" id="override-immediate" />
+                <span className="text-sm">Immediate</span>
+              </label>
+              <label
+                htmlFor="override-daily"
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  overrideFrequency === "daily" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <RadioGroupItem value="daily" id="override-daily" />
+                <span className="text-sm">Daily digest</span>
+              </label>
+              <label
+                htmlFor="override-weekly"
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  overrideFrequency === "weekly" ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <RadioGroupItem value="weekly" id="override-weekly" />
+                <span className="text-sm">Weekly digest</span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          <Separator />
+
+          {/* Override Change Types */}
+          <div>
+            <Label className="text-sm font-medium mb-3 block">Change Types</Label>
+            <div className="space-y-3">
+              {CHANGE_TYPES.map((type) => (
+                <label
+                  key={type.id}
+                  htmlFor={`override-${type.id}`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    overrideChangeTypes[type.id] ? "border-accent/50 bg-accent/5" : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <Checkbox
+                    id={`override-${type.id}`}
+                    checked={overrideChangeTypes[type.id]}
+                    onCheckedChange={() => toggleOverrideChangeType(type.id)}
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">{type.label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <SheetFooter className="border-t border-border pt-4 flex-row gap-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 min-h-[44px]">
+            Cancel
+          </Button>
+          <Button onClick={handleSaveOverride} className="flex-1 min-h-[44px]">
+            Save override
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function NotificationsSettingsPage() {
+  const { toast } = useToast()
+
+  // Settings state
+  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS)
+  const [savedSettings, setSavedSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS)
+
+  // UI state
+  const [overrideSheet, setOverrideSheet] = useState<{
+    open: boolean
+    watchlist: WatchlistItem | null
+  }>({ open: false, watchlist: null })
+
+  // Dirty state tracking
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings)
+
+  // Handlers
+  const handleSave = useCallback(() => {
+    setSavedSettings({ ...settings })
+    toast({
+      title: "Saved (placeholder)",
+      description: "Your notification preferences have been saved.",
+    })
+  }, [settings, toast])
+
+  const handleCancel = useCallback(() => {
+    setSettings({ ...savedSettings })
+  }, [savedSettings])
+
+  const updateSetting = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
   const toggleChangeType = (id: string) => {
-    setChangeTypeSettings((prev) => ({
+    setSettings((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      changeTypes: {
+        ...prev.changeTypes,
+        [id]: !prev.changeTypes[id],
+      },
     }))
   }
 
-  const toggleWatchlistOverride = (id: string) => {
-    setWatchlistOverrides((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
+  const openOverrideSheet = (watchlist: WatchlistItem) => {
+    setOverrideSheet({ open: true, watchlist })
+  }
+
+  const handleManageWatchlists = () => {
+    toast({
+      title: "Coming soon",
+      description: "Watchlist management will be available in a future update.",
+    })
   }
 
   return (
     <AppLayout>
       <TooltipProvider>
         <div className="min-h-screen bg-background">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Button href="/settings" className="hover:text-foreground transition-colors">
-              Settings
-            </Button>
-            <ChevronDown className="h-4 w-4" />
-            <span className="text-foreground">Notifications</span>
-          </nav>
-
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Bell className="h-5 w-5 text-accent" />
-                </div>
-                Notification Settings
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Configure how and when you receive updates about your watched people groups
+          <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
+            {/* Page Header */}
+            <header className="mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Notifications</h1>
+              <p className="text-muted-foreground mt-2 text-balance">
+                Configure how and when you receive updates about watched people groups.
               </p>
-            </div>
-            <Button onClick={handleSave} className="gap-2 min-h-[44px]">
-              {saved ? (
-                <>
-                  <Bell className="h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </div>
+            </header>
 
-          <div className="space-y-6">
-            {/* Master Toggle */}
-            <Card className="border-border/50">
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                      <Bell className="h-6 w-6 text-accent" />
-                    </div>
-                    <div>
-                      <Label htmlFor="notificationsEnabled" className="font-medium text-foreground">
-                        Enable Notifications
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive updates about changes to your watched people groups
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={notificationsEnabled}
-                    onCheckedChange={setNotificationsEnabled}
-                    className="scale-110"
-                  />
-                </div>
+            <div className="space-y-6 pb-32 md:pb-24">
+              {/* ───────────────────────────────────────────────────────────────
+                  Card 1: Delivery Channels
+              ─────────────────────────────────────────────────────────────── */}
+              <Card className="p-6 border-border/50">
+                <h2 className="text-lg font-semibold text-foreground mb-1">Delivery Channels</h2>
+                <p className="text-sm text-muted-foreground mb-6">Choose how you want to receive notifications.</p>
 
-                {notificationsEnabled && (
-                  <>
-                    <Separator className="my-6" />
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                          <Mail className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <Label htmlFor="emailEnabled" className="font-medium text-foreground">
-                            Email Notifications
-                          </Label>
-                          <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                        </div>
-                      </div>
-                      <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
-                    </div>
-                  </>
-                )}
-              </div>
-            </Card>
-
-            {notificationsEnabled && (
-              <>
-                {/* Change Types */}
-                <Card className="border-border/50">
-                  <div className="p-4">
-                    <h3 className="font-medium text-foreground mb-2">Change Types</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Select which types of changes you want to be notified about
-                    </p>
-                    <div className="space-y-4">
-                      {changeTypes.map((type) => (
-                        <div
-                          key={type.id}
-                          className={`flex items-center justify-between gap-4 p-4 rounded-lg border transition-colors ${
-                            changeTypeSettings[type.id] ? "border-accent/30 bg-accent/5" : "border-border/50 bg-card"
-                          }`}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div
-                              className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                                changeTypeSettings[type.id]
-                                  ? "bg-accent/10 text-accent"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              <type.icon className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <Label htmlFor={type.id} className="font-medium text-foreground cursor-pointer">
-                                {type.name}
-                              </Label>
-                              <p className="text-sm text-muted-foreground mt-1">{type.description}</p>
-                              {type.hasThreshold && changeTypeSettings[type.id] && (
-                                <div className="mt-3 flex items-center gap-3">
-                                  <Label className="text-sm text-muted-foreground whitespace-nowrap">Threshold:</Label>
-                                  <Input
-                                    type="number"
-                                    value={populationThreshold}
-                                    onChange={(e) => setPopulationThreshold(e.target.value)}
-                                    className="w-32 h-9"
-                                  />
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="h-4 w-4 text-muted-foreground" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="max-w-xs">
-                                        You'll be notified when population changes by more than this percentage
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Switch
-                            id={type.id}
-                            checked={changeTypeSettings[type.id]}
-                            onCheckedChange={() => toggleChangeType(type.id)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Frequency */}
-                <Card className="border-border/50">
-                  <div className="p-4">
-                    <h3 className="font-medium text-foreground mb-2">Notification Frequency</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Choose how often you want to receive notifications
-                    </p>
-                    <RadioGroup value={frequency} onValueChange={setFrequency} className="space-y-3">
-                      {frequencyOptions.map((option) => (
-                        <label
-                          key={option.id}
-                          htmlFor={option.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
-                            frequency === option.id
-                              ? "border-accent/30 bg-accent/5"
-                              : "border-border/50 bg-card hover:bg-muted/50"
-                          }`}
-                        >
-                          <RadioGroupItem value={option.id} id={option.id} />
-                          <div
-                            className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                              frequency === option.id ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            <option.icon className="h-5 w-5" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground">{option.name}</div>
-                            <p className="text-sm text-muted-foreground">{option.description}</p>
-                          </div>
-                          {option.id === "daily" && (
-                            <Badge variant="secondary" className="text-xs">
-                              Recommended
-                            </Badge>
-                          )}
-                        </label>
-                      ))}
-                    </RadioGroup>
-
-                    {frequency === "daily" && (
-                      <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border/50">
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <Label className="text-sm font-medium">Delivery Time</Label>
-                            <div className="flex items-center gap-3 mt-2">
-                              <Select defaultValue="09:00">
-                                <SelectTrigger className="w-32">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="06:00">6:00 AM</SelectItem>
-                                  <SelectItem value="09:00">9:00 AM</SelectItem>
-                                  <SelectItem value="12:00">12:00 PM</SelectItem>
-                                  <SelectItem value="18:00">6:00 PM</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <span className="text-sm text-muted-foreground">(Your local time)</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {frequency === "weekly" && (
-                      <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border/50">
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <Label className="text-sm font-medium">Delivery Day</Label>
-                            <div className="flex items-center gap-3 mt-2">
-                              <Select defaultValue="monday">
-                                <SelectTrigger className="w-32">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="monday">Monday</SelectItem>
-                                  <SelectItem value="tuesday">Tuesday</SelectItem>
-                                  <SelectItem value="wednesday">Wednesday</SelectItem>
-                                  <SelectItem value="thursday">Thursday</SelectItem>
-                                  <SelectItem value="friday">Friday</SelectItem>
-                                  <SelectItem value="saturday">Saturday</SelectItem>
-                                  <SelectItem value="sunday">Sunday</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <span className="text-sm text-muted-foreground">at 9:00 AM</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-
-                {/* Per-Watchlist Overrides */}
-                <Card className="border-border/50">
-                  <div className="p-4">
-                    <h3 className="font-medium text-foreground mb-2">Watchlist Overrides</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Customize notification settings for specific watchlists
-                    </p>
-                    <Collapsible type="multiple" className="space-y-3">
-                      {watchlists.map((watchlist) => (
-                        <div
-                          key={watchlist.id}
-                          className={`border rounded-lg px-4 transition-colors ${
-                            watchlistOverrides[watchlist.id] ? "border-accent/30 bg-accent/5" : "border-border/50"
-                          }`}
-                        >
-                          <div className="flex items-center gap-4 py-4">
-                            <div
-                              className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-                                watchlistOverrides[watchlist.id]
-                                  ? "bg-accent/10 text-accent"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              <Users className="h-5 w-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-foreground truncate">{watchlist.name}</div>
-                              <p className="text-sm text-muted-foreground">{watchlist.itemCount} people groups</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              {watchlistOverrides[watchlist.id] && (
-                                <Badge variant="outline" className="text-xs text-accent border-accent/30">
-                                  Custom
-                                </Badge>
-                              )}
-                              <Switch
-                                checked={watchlistOverrides[watchlist.id] || false}
-                                onCheckedChange={() => toggleWatchlistOverride(watchlist.id)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          </div>
-                          {watchlistOverrides[watchlist.id] && (
-                            <div className="pt-2 border-t border-border/50">
-                              {/* Override Frequency */}
-                              <div className="pt-4">
-                                <Label className="text-sm font-medium mb-3 block">Notification Frequency</Label>
-                                <RadioGroup
-                                  defaultValue={watchlist.overrideSettings?.frequency || "daily"}
-                                  className="flex flex-wrap gap-3"
-                                >
-                                  {frequencyOptions.map((option) => (
-                                    <label
-                                      key={option.id}
-                                      htmlFor={`${watchlist.id}-${option.id}`}
-                                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
-                                    >
-                                      <RadioGroupItem value={option.id} id={`${watchlist.id}-${option.id}`} />
-                                      <span className="text-sm">{option.name}</span>
-                                    </label>
-                                  ))}
-                                </RadioGroup>
-                              </div>
-
-                              {/* Override Change Types */}
-                              <div className="pt-2">
-                                <Label className="text-sm font-medium mb-3 block">Change Types to Monitor</Label>
-                                <div className="flex flex-wrap gap-2">
-                                  {changeTypes.map((type) => {
-                                    const isActive = watchlist.overrideSettings?.changeTypes?.includes(type.id) || false
-                                    return (
-                                      <button
-                                        key={type.id}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-                                          isActive
-                                            ? "border-accent/30 bg-accent/10 text-accent"
-                                            : "border-border/50 text-muted-foreground hover:bg-muted/50"
-                                        }`}
-                                      >
-                                        <type.icon className="h-4 w-4" />
-                                        {type.name.split(" ")[0]}
-                                      </button>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </Collapsible>
-
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                      <Button href="/watchlist" className="text-sm text-accent hover:underline flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Manage your watchlists
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Quick Summary */}
-                <Card className="border-accent/20 bg-accent/5">
-                  <div className="p-6">
-                    <div className="flex items-start gap-4">
+                <div className="space-y-4">
+                  {/* Master Toggle */}
+                  <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border/50 bg-muted/30">
+                    <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                        <Bell className="h-5 w-5 text-accent" />
+                        <Bell className="h-5 w-5 text-accent" aria-hidden="true" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-foreground mb-2">Current Configuration Summary</h3>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          <li>
-                            • Monitoring{" "}
-                            <span className="text-foreground font-medium">
-                              {Object.values(changeTypeSettings).filter(Boolean).length}
-                            </span>{" "}
-                            change types
-                          </li>
-                          <li>
-                            • Receiving{" "}
-                            <span className="text-foreground font-medium">
-                              {frequencyOptions.find((f) => f.id === frequency)?.name.toLowerCase()}
-                            </span>{" "}
-                            notifications
-                          </li>
-                          <li>
-                            •{" "}
-                            <span className="text-foreground font-medium">
-                              {Object.values(watchlistOverrides).filter(Boolean).length}
-                            </span>{" "}
-                            watchlists with custom settings
-                          </li>
-                        </ul>
+                        <Label htmlFor="notifications-enabled" className="font-medium text-foreground cursor-pointer">
+                          Enable notifications
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receive updates about your watched people groups
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      id="notifications-enabled"
+                      checked={settings.enabled}
+                      onCheckedChange={(checked) => updateSetting("enabled", checked)}
+                      aria-label="Enable notifications"
+                    />
+                  </div>
+
+                  {/* Email Toggle */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={`flex items-center justify-between gap-4 p-4 rounded-lg border border-border/50 transition-opacity ${
+                          !settings.enabled ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Mail className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor="email-enabled"
+                              className={`font-medium text-foreground ${
+                                !settings.enabled ? "cursor-not-allowed" : "cursor-pointer"
+                              }`}
+                            >
+                              Email
+                            </Label>
+                            <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                          </div>
+                        </div>
+                        <Switch
+                          id="email-enabled"
+                          checked={settings.emailEnabled}
+                          onCheckedChange={(checked) => updateSetting("emailEnabled", checked)}
+                          disabled={!settings.enabled}
+                          aria-label="Enable email notifications"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    {!settings.enabled && <TooltipContent>Enable notifications first</TooltipContent>}
+                  </Tooltip>
+
+                  {/* In-app Placeholder (disabled) */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border/50 opacity-50 cursor-not-allowed">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Smartphone className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                          </div>
+                          <div>
+                            <Label className="font-medium text-foreground cursor-not-allowed">In-app</Label>
+                            <p className="text-sm text-muted-foreground">Receive notifications in the app</p>
+                          </div>
+                        </div>
+                        <Switch disabled aria-label="In-app notifications (coming soon)" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Coming soon</TooltipContent>
+                  </Tooltip>
+                </div>
+              </Card>
+
+              {/* ───────────────────────────────────────────────────────────────
+                  Card 2: Change Types
+              ─────────────────────────────────────────────────────────────── */}
+              <Card
+                className={`p-6 border-border/50 transition-opacity ${
+                  !settings.enabled ? "opacity-50 pointer-events-none" : ""
+                }`}
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-1">Change Types</h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Select which types of changes you want to be notified about.
+                </p>
+
+                <div className="space-y-3">
+                  {CHANGE_TYPES.map((type) => {
+                    const isPopulation = type.id === "population"
+                    const isChecked = settings.changeTypes[type.id]
+
+                    return (
+                      <div key={type.id}>
+                        <label
+                          htmlFor={`change-${type.id}`}
+                          className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                            isChecked ? "border-accent/50 bg-accent/5" : "border-border/50 hover:bg-muted/50"
+                          }`}
+                        >
+                          <Checkbox
+                            id={`change-${type.id}`}
+                            checked={isChecked}
+                            onCheckedChange={() => toggleChangeType(type.id)}
+                            className="mt-0.5"
+                            aria-label={type.label}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <type.icon className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                              <span className="font-medium text-foreground">{type.label}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{type.description}</p>
+                          </div>
+                        </label>
+
+                        {/* Population threshold input */}
+                        {isPopulation && isChecked && (
+                          <div className="ml-10 mt-3 flex items-center gap-3">
+                            <Label
+                              htmlFor="population-threshold"
+                              className="text-sm text-muted-foreground whitespace-nowrap"
+                            >
+                              Threshold:
+                            </Label>
+                            <Input
+                              id="population-threshold"
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={settings.populationThreshold}
+                              onChange={(e) => updateSetting("populationThreshold", e.target.value)}
+                              className="w-20 h-9"
+                              aria-label="Population change threshold percentage"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Threshold help">
+                                  <span className="text-xs text-muted-foreground">?</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                You&apos;ll be notified when population estimates change by more than this percentage.
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+
+              {/* ───────────────────────────────────────────────────────────────
+                  Card 3: Frequency
+              ─────────────────────────────────────────────────────────────── */}
+              <Card
+                className={`p-6 border-border/50 transition-opacity ${
+                  !settings.enabled ? "opacity-50 pointer-events-none" : ""
+                }`}
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-1">Frequency</h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Choose how often you want to receive notifications.
+                </p>
+
+                <RadioGroup
+                  value={settings.frequency}
+                  onValueChange={(value) => updateSetting("frequency", value)}
+                  className="space-y-3"
+                >
+                  {/* Immediate */}
+                  <label
+                    htmlFor="freq-immediate"
+                    className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      settings.frequency === "immediate"
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border/50 hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem value="immediate" id="freq-immediate" />
+                    <div className="flex-1">
+                      <span className="font-medium text-foreground">Immediate</span>
+                      <p className="text-sm text-muted-foreground">Receive notifications as changes happen</p>
+                    </div>
+                  </label>
+
+                  {/* Daily Digest */}
+                  <label
+                    htmlFor="freq-daily"
+                    className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      settings.frequency === "daily"
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border/50 hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem value="daily" id="freq-daily" />
+                    <div className="flex-1">
+                      <span className="font-medium text-foreground">Daily digest</span>
+                      <p className="text-sm text-muted-foreground">One email per day summarizing all changes</p>
+                    </div>
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      Recommended
+                    </Badge>
+                  </label>
+
+                  {/* Weekly Digest */}
+                  <label
+                    htmlFor="freq-weekly"
+                    className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      settings.frequency === "weekly"
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border/50 hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem value="weekly" id="freq-weekly" />
+                    <div className="flex-1">
+                      <span className="font-medium text-foreground">Weekly digest</span>
+                      <p className="text-sm text-muted-foreground">One email per week summarizing all changes</p>
+                    </div>
+                  </label>
+                </RadioGroup>
+
+                {/* Delivery Time (Daily) */}
+                {settings.frequency === "daily" && (
+                  <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                      <div className="flex-1">
+                        <Label htmlFor="delivery-time" className="text-sm font-medium">
+                          Delivery time
+                        </Label>
+                        <div className="flex items-center gap-3 mt-2">
+                          <Select
+                            value={settings.deliveryTime}
+                            onValueChange={(value) => updateSetting("deliveryTime", value)}
+                          >
+                            <SelectTrigger id="delivery-time" className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="06:00">6:00 AM</SelectItem>
+                              <SelectItem value="09:00">9:00 AM</SelectItem>
+                              <SelectItem value="12:00">12:00 PM</SelectItem>
+                              <SelectItem value="18:00">6:00 PM</SelectItem>
+                              <SelectItem value="21:00">9:00 PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-muted-foreground">Your local time</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </Card>
-              </>
-            )}
+                )}
+
+                {/* Delivery Day + Time (Weekly) */}
+                {settings.frequency === "weekly" && (
+                  <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                      <div className="flex-1">
+                        <Label htmlFor="delivery-day" className="text-sm font-medium">
+                          Delivery day
+                        </Label>
+                        <div className="flex flex-wrap items-center gap-3 mt-2">
+                          <Select
+                            value={settings.deliveryDay}
+                            onValueChange={(value) => updateSetting("deliveryDay", value)}
+                          >
+                            <SelectTrigger id="delivery-day" className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="monday">Monday</SelectItem>
+                              <SelectItem value="tuesday">Tuesday</SelectItem>
+                              <SelectItem value="wednesday">Wednesday</SelectItem>
+                              <SelectItem value="thursday">Thursday</SelectItem>
+                              <SelectItem value="friday">Friday</SelectItem>
+                              <SelectItem value="saturday">Saturday</SelectItem>
+                              <SelectItem value="sunday">Sunday</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-muted-foreground">at</span>
+                          <Select
+                            value={settings.deliveryTime}
+                            onValueChange={(value) => updateSetting("deliveryTime", value)}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="06:00">6:00 AM</SelectItem>
+                              <SelectItem value="09:00">9:00 AM</SelectItem>
+                              <SelectItem value="12:00">12:00 PM</SelectItem>
+                              <SelectItem value="18:00">6:00 PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-muted-foreground">Your local time</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              {/* ───────────────────────────────────────────────────────────────
+                  Card 4: Watchlist Overrides
+              ─────────────────────────────────────────────────────────────── */}
+              <Card
+                className={`p-6 border-border/50 transition-opacity ${
+                  !settings.enabled ? "opacity-50 pointer-events-none" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground mb-1">Watchlist Overrides</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Customize notification settings for specific watchlists.
+                    </p>
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManageWatchlists}
+                        className="shrink-0 min-h-[36px] bg-transparent"
+                        aria-disabled="true"
+                      >
+                        Manage watchlists
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Coming soon</TooltipContent>
+                  </Tooltip>
+                </div>
+
+                <div className="space-y-2">
+                  {WATCHLISTS.map((watchlist) => (
+                    <div
+                      key={watchlist.id}
+                      className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{watchlist.name}</p>
+                          <p className="text-sm text-muted-foreground">{watchlist.itemCount} people groups</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {watchlist.hasOverride && (
+                          <Badge variant="outline" className="text-xs text-accent border-accent/30">
+                            Custom
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openOverrideSheet(watchlist)}
+                          className="min-h-[36px] gap-1.5"
+                          aria-label={`Customize notifications for ${watchlist.name}`}
+                        >
+                          <Settings2 className="h-4 w-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">Customize</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
           </div>
+
+          {/* Sticky Save Bar */}
+          <StickySaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
+
+          {/* Watchlist Override Sheet */}
+          <WatchlistOverrideSheet
+            watchlist={overrideSheet.watchlist}
+            open={overrideSheet.open}
+            onOpenChange={(open) =>
+              setOverrideSheet((prev) => ({ ...prev, open, watchlist: open ? prev.watchlist : null }))
+            }
+          />
         </div>
       </TooltipProvider>
     </AppLayout>
