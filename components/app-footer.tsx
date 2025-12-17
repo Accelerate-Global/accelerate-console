@@ -129,7 +129,7 @@ export function AppFooter() {
         {/* Bottom Row */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} PeopleGroups. All rights reserved.
+            &copy; {new Date().getFullYear()} Accelerate Global. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
             {socialLinks.map((social) => {

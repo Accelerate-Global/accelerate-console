@@ -68,7 +68,7 @@ export function AppHeader({ onLogoClick }: AppHeaderProps) {
                 <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="font-semibold text-foreground hidden sm:inline">PeopleGroups</span>
+                <span className="font-semibold text-foreground hidden sm:inline">Accelerate Global // Data</span>
               </button>
             </TooltipTrigger>
             <TooltipContent className="tooltip-content">

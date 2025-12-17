@@ -58,7 +58,7 @@ export function ExplorePage() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-foreground">PeopleGroups</span>
+            <span className="font-semibold text-foreground">Accelerate Global // Data</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">

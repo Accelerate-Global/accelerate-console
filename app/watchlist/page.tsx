@@ -1,7 +1,7 @@
 import { WatchlistPage } from "@/components/watchlist-page"
 
 export const metadata = {
-  title: "Watchlist - PeopleGroups",
+  title: "Watchlist - People Groups",
   description: "Track changes in your watched people groups",
 }
 
