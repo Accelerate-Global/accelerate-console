@@ -879,7 +879,7 @@ export function SavedViewsPage() {
               <div className="space-y-2">
                 <Label>Share Link</Label>
                 <div className="flex gap-2">
-                  <Input readOnly value={`https://peoplegroups.app/view/${shareDialog.view?.id}`} className="flex-1" />
+                  <Input readOnly value={`https://AccelerateGlobal.app/view/${shareDialog.view?.id}`} className="flex-1" />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button

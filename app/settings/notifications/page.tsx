@@ -1,7 +1,7 @@
 import { NotificationsSettingsPage } from "@/components/notifications-settings-page"
 
 export const metadata = {
-  title: "Notification Settings | People Groups",
+  title: "Notification Settings | Accelerate Global",
   description: "Configure your notification preferences for watchlist updates",
 }
 

@@ -96,8 +96,8 @@ const filterData = {
     count: 28,
     options: [
       { label: "Joshua Project", count: 12456 },
-      { label: "IMB", count: 9876 },
-      { label: "Ethnologue", count: 7654 },
+      { label: "Accelerate Global", count: 9876 },
+      { label: "Etnopedia", count: 7654 },
       { label: "CPPI", count: 5432 },
       { label: "PeopleGroups.org", count: 4321 },
       { label: "World Christian Database", count: 3210 },
