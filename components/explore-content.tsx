@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { IconButton } from "@/components/icon-button"
+import { DATA_SOURCE_NAME } from "@/lib/constants"
 
 const filterData = {
   Countries: {
@@ -96,11 +97,10 @@ const filterData = {
     count: 28,
     options: [
       { label: "Joshua Project", count: 12456 },
-      { label: "Accelerate Global", count: 9876 },
+      { label: DATA_SOURCE_NAME, count: 9876 },
       { label: "Etnopedia", count: 7654 },
       { label: "CPPI", count: 5432 },
-      { label: "PeopleGroups.org", count: 4321 },
-      { label: "World Christian Database", count: 3210 },
+      { label: "World Christian Database", count: 4321 },
     ],
   },
 }

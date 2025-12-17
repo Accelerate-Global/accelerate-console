@@ -3,6 +3,7 @@
 import type React from "react"
 import { X, Copy, ExternalLink } from "lucide-react"
 import { getEngagementColor } from "@/lib/status-colors"
+import { DATA_SOURCE_NAME } from "@/lib/constants"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -127,10 +128,9 @@ const facetFilters = [
     icon: BookOpen,
     options: [
       { value: "joshua-project", label: "Joshua Project", count: 12456 },
-      { value: "ax", label: "Accelerate Global", count: 9876 },
+      { value: "ax", label: DATA_SOURCE_NAME, count: 9876 },
       { value: "etnopedia", label: "Etnopedia", count: 7654 },
       { value: "cppi", label: "CPPI", count: 5432 },
-      { value: "peoplegroups-org", label: "PeopleGroups.org", count: 4321 },
     ],
   },
 ]

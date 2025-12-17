@@ -48,6 +48,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
 import { AppLayout } from "@/components/app-layout"
+import { APP_URL } from "@/lib/constants"
 
 const initialFolders = [
   { id: "all", name: "All Views", count: 12, icon: Folder },
@@ -209,7 +210,7 @@ export function SavedViewsPage() {
   })
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://peoplegroups.app/view/${shareDialog.view?.id}`)
+    navigator.clipboard.writeText(`${APP_URL}/view/${shareDialog.view?.id}`)
     setLinkCopied(true)
     toast({ title: "Link copied", description: "Share link has been copied to clipboard." })
     setTimeout(() => setLinkCopied(false), 2000)
@@ -879,7 +880,7 @@ export function SavedViewsPage() {
               <div className="space-y-2">
                 <Label>Share Link</Label>
                 <div className="flex gap-2">
-                  <Input readOnly value={`https://AccelerateGlobal.app/view/${shareDialog.view?.id}`} className="flex-1" />
+                  <Input readOnly value={`${APP_URL}/view/${shareDialog.view?.id}`} className="flex-1" />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button

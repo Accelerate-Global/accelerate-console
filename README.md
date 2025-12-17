@@ -1,4 +1,4 @@
-# Explore People Groups
+# Accelerate Global
 
 *Automatically synced with your [v0.app](https://v0.app) deployments*
 
@@ -6,6 +6,8 @@
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/grk8oFgPw88)
 
 ## Overview
+
+Accelerate Global is a read-only people group intelligence platform. Discover detailed information on over 17,000 people groups worldwide with transparent, well-sourced data.
 
 This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
 Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).

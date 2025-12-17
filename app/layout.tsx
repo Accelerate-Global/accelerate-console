@@ -4,15 +4,25 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ThemeProvider } from "@/components/theme-provider"
+import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Explore People Groups",
-  description: "Discover and explore people groups worldwide",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
   generator: "v0.app",
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    siteName: APP_NAME,
+  },
+  twitter: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+  },
   icons: {
     icon: [
       {
